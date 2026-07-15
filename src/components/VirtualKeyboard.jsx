@@ -17,7 +17,7 @@ export default function VirtualKeyboard({ value, onChange, maxLength = 40 }) {
   }
 
   return (
-    <div className="w-full max-w-3xl mx-auto select-none font-sora">
+    <div className="w-full max-w-3xl mx-auto select-none font-sans">
       {ROWS.map((row, i) => (
         <div key={i} className="flex justify-center gap-1.5 mb-1.5">
           {row.map((key) => (
@@ -25,7 +25,7 @@ export default function VirtualKeyboard({ value, onChange, maxLength = 40 }) {
               key={key}
               type="button"
               onClick={() => pressKey(key)}
-              className="flex-1 max-w-16 h-14 rounded-xl bg-white/10 text-white text-xl font-semibold active:bg-electric active:text-navy transition-colors"
+              className="flex-1 max-w-16 h-14 rounded-md bg-white/6 text-white text-xl font-semibold border border-white/8 active:bg-lime-400 active:text-navy-950 transition-colors"
             >
               {key}
             </button>
@@ -36,14 +36,14 @@ export default function VirtualKeyboard({ value, onChange, maxLength = 40 }) {
         <button
           type="button"
           onClick={space}
-          className="flex-[3] h-14 rounded-xl bg-white/10 text-white text-lg font-semibold active:bg-electric active:text-navy transition-colors"
+          className="flex-[3] h-14 rounded-md bg-white/6 text-white text-lg font-semibold border border-white/8 active:bg-lime-400 active:text-navy-950 transition-colors"
         >
           espaço
         </button>
         <button
           type="button"
           onClick={backspace}
-          className="flex-[1.4] h-14 rounded-xl bg-white/20 text-white text-lg font-semibold active:bg-crayola transition-colors"
+          className="flex-[1.4] h-14 rounded-md bg-white/10 text-white text-lg font-semibold border border-white/8 active:bg-sky-500 transition-colors"
         >
           ⌫ apagar
         </button>

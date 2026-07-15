@@ -37,7 +37,7 @@ function KioskFlow() {
   const ScreenComponent = SCREEN_COMPONENTS[screen]
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-navy transition-opacity duration-300">
+    <div className="fixed inset-0 overflow-hidden bg-revi-gradient transition-opacity duration-300">
       <ScreenComponent />
     </div>
   )

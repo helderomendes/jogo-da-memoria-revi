@@ -14,22 +14,22 @@ export default function ResultScreen() {
   }, [])
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-between bg-navy px-8 py-14 text-center text-white">
-      <h1 className="font-headline text-4xl">
-        Resultado de <span className="text-electric">{session.name.split(' ')[0]}</span>
+    <div className="flex h-full w-full flex-col items-center justify-between bg-revi-gradient px-8 py-14 text-center text-white">
+      <h1 className="text-4xl font-bold tracking-tight">
+        Resultado de <span className="text-lime-400">{session.name.split(' ')[0]}</span>
       </h1>
 
       <div className="flex flex-col items-center gap-6">
         <Mascot className="h-36 w-36" />
 
-        <div className="text-7xl font-extrabold">
-          <span className="text-electric">{bestMatches}</span>
-          <span className="text-white/50"> / {totalPairs}</span>
+        <div className="text-7xl font-extrabold tracking-tight">
+          <span className="text-lime-400">{bestMatches}</span>
+          <span className="text-ink-300"> / {totalPairs}</span>
         </div>
-        <p className="text-xl text-white/80">pares encontrados</p>
+        <p className="text-xl text-ink-100">pares encontrados</p>
 
-        <p className="text-lg text-white/60">
-          Tentativas usadas: <strong className="text-crayola">{attempts.length}</strong> de{' '}
+        <p className="text-lg text-ink-300">
+          Tentativas usadas: <strong className="text-sky-400">{attempts.length}</strong> de{' '}
           {maxAttempts ?? '-'}
         </p>
       </div>

@@ -35,27 +35,27 @@ export default function CardsEditor() {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-bold">Pares de cartas ({cards.length})</h2>
         <div className="flex items-center gap-3">
-          {savedAt && <span className="text-sm text-emerald-600">Salvo!</span>}
+          {savedAt && <span className="text-sm font-semibold text-lime-500">Salvo!</span>}
           <button
             type="button"
             onClick={addCard}
-            className="rounded-lg bg-white border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50"
+            className="rounded-full border border-line-light bg-card-light px-4 py-2 text-sm font-semibold hover:bg-chip-light"
           >
             + Adicionar par
           </button>
           <button
             type="button"
             onClick={handleSave}
-            className="rounded-lg bg-crayola px-4 py-2 text-sm font-semibold text-white hover:brightness-95"
+            className="rounded-full bg-brand-navy px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
           >
             Salvar alterações
           </button>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="overflow-hidden rounded-lg border border-line-light bg-card-light">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
+          <thead className="bg-chip-light text-left text-ink-dim">
             <tr>
               <th className="px-4 py-2">ID</th>
               <th className="px-4 py-2">Frase / texto do card</th>
@@ -65,13 +65,13 @@ export default function CardsEditor() {
           </thead>
           <tbody>
             {cards.map((card) => (
-              <tr key={card.id} className="border-t border-slate-100">
-                <td className="px-4 py-2 text-slate-400">{card.id}</td>
+              <tr key={card.id} className="border-t border-line-light">
+                <td className="px-4 py-2 text-ink-dim">{card.id}</td>
                 <td className="px-4 py-2">
                   <input
                     value={card.text}
                     onChange={(e) => updateCard(card.id, 'text', e.target.value)}
-                    className="w-full rounded border border-slate-300 px-2 py-1"
+                    className="w-full rounded-md border border-line-light px-2 py-1"
                   />
                 </td>
                 <td className="px-4 py-2">
@@ -79,7 +79,7 @@ export default function CardsEditor() {
                     value={card.image ?? ''}
                     onChange={(e) => updateCard(card.id, 'image', e.target.value || null)}
                     placeholder="/cards/exemplo.jpg"
-                    className="w-full rounded border border-slate-300 px-2 py-1"
+                    className="w-full rounded-md border border-line-light px-2 py-1"
                   />
                 </td>
                 <td className="px-4 py-2">

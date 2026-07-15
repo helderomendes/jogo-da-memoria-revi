@@ -15,10 +15,10 @@ export default function NumericKeypad({ onDigit, onBackspace }) {
           type="button"
           onClick={() => handlePress(key)}
           disabled={key === ''}
-          className={`h-16 rounded-xl text-2xl font-semibold transition-colors ${
+          className={`h-16 rounded-md text-2xl font-semibold border border-white/8 transition-colors ${
             key === ''
               ? 'invisible'
-              : 'bg-white/10 text-white active:bg-electric active:text-navy'
+              : 'bg-white/6 text-white active:bg-lime-400 active:text-navy-950'
           }`}
         >
           {key}

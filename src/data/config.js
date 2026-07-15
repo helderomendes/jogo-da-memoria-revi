@@ -1,8 +1,9 @@
 // Configuração geral do jogo. Editável no painel admin, persistida via dataStore.
 export const DEFAULT_GAME_CONFIG = {
   pairsPerGame: 10,
-  boardRows: 4,
-  boardCols: 5,
+  // Totem é retrato: mais linhas que colunas aproveita melhor a altura da tela.
+  boardRows: 5,
+  boardCols: 4,
   memorizeSeconds: 5,
   maxAttempts: 3,
   // Jogadas (flips de 2 cartas) disponíveis por rodada. Limita a rodada pra

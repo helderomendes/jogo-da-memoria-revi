@@ -16,13 +16,13 @@ export default function ThanksScreen() {
   }, [resetToIdle])
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-8 bg-navy px-8 text-center text-white">
+    <div className="flex h-full w-full flex-col items-center justify-center gap-8 bg-revi-gradient px-8 text-center text-white">
       <Mascot className="h-40 w-40" />
-      <h1 className="font-headline text-4xl">
-        Valeu por jogar com a <span className="text-electric">Revi</span>!
+      <h1 className="text-4xl font-bold tracking-tight">
+        Valeu por jogar com a <span className="text-lime-400">Revi</span>!
       </h1>
-      <p className="text-xl text-white/70">Até a próxima.</p>
-      <Logo className="text-2xl mt-4" />
+      <p className="text-xl text-ink-200">Até a próxima.</p>
+      <Logo className="h-7 mt-4" />
     </div>
   )
 }

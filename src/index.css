@@ -1,14 +1,59 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,600;1,700;1,800&display=swap');
 @import "tailwindcss";
 
-@theme {
-  --color-navy: #001149;
-  --color-navy-light: #0a1f6b;
-  --color-electric: #5ef750;
-  --color-crayola: #1c7afd;
+@font-face {
+  font-family: 'DM Sans';
+  src: url('./assets/fonts/DMSans-Variable.woff2') format('woff2');
+  font-weight: 100 1000;
+  font-style: normal;
+  font-display: swap;
+}
 
-  --font-sora: 'Sora', system-ui, sans-serif;
-  --font-playfair: 'Playfair Display', serif;
+@theme {
+  /* Navy — gradiente de marca */
+  --color-navy-950: #05091f;
+  --color-navy-900: #0a1030;
+  --color-navy-800: #121a46;
+  --color-navy-700: #1b2566;
+  --color-navy-600: #2a3687;
+  --color-navy-500: #3e4bb0;
+
+  /* Acentos */
+  --color-sky-400: #7cc6ff;
+  --color-sky-500: #56bbee;
+  --color-sky-600: #1e86e6;
+
+  --color-lime-300: #cfff6b;
+  --color-lime-400: #65f24b;
+  --color-lime-500: #32c700;
+
+  /* Neutros */
+  --color-ink-100: #e6eaf3;
+  --color-ink-200: #c5cce0;
+  --color-ink-300: #9aa3be;
+  --color-ink-400: #6e779a;
+  --color-ink-500: #4a537a;
+
+  --color-danger: #ff6b6b;
+  --color-warning: #ffc857;
+
+  /* Superfícies LIGHT (admin / dashboards diurnos) */
+  --color-page-light: #f4f6fb;
+  --color-card-light: #ffffff;
+  --color-chip-light: #eaf1ff;
+  --color-line-light: #e8ecf5;
+  --color-brand-navy: #0940c6;
+  --color-ink-strong: #0a1030;
+  --color-ink-medium: #2a335e;
+  --color-ink-dim: #6e779a;
+
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-2xl: 36px;
 }
 
 @layer base {
@@ -22,8 +67,8 @@
     padding: 0;
     height: 100%;
     overscroll-behavior: none;
-    font-family: var(--font-sora);
-    background: var(--color-navy);
+    font-family: var(--font-sans);
+    background: var(--color-navy-900);
     color: white;
     user-select: none;
   }
@@ -40,10 +85,45 @@
   }
 }
 
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
 @layer utilities {
-  .font-headline {
-    font-family: var(--font-playfair);
-    font-style: italic;
+  .bg-revi-gradient {
+    background: radial-gradient(120% 80% at 50% 0%, #1a2a7a 0%, #0a1030 55%, #05091f 100%);
+  }
+
+  .shadow-card {
+    box-shadow:
+      0 8px 24px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .shadow-glow-lime {
+    box-shadow:
+      0 0 0 1px rgba(101, 242, 75, 0.3),
+      0 12px 40px -8px rgba(101, 242, 75, 0.45);
+  }
+
+  .shadow-glow-sky {
+    box-shadow:
+      0 0 0 1px rgba(63, 168, 255, 0.35),
+      0 12px 40px -6px rgba(63, 168, 255, 0.45);
+  }
+
+  .halo-sky::before {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    background: radial-gradient(60% 60% at 50% 50%, rgba(63, 168, 255, 0.35) 0%, rgba(10, 16, 48, 0) 70%);
+    z-index: -1;
   }
 
   .no-scrollbar::-webkit-scrollbar {

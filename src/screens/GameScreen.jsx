@@ -128,37 +128,44 @@ export default function GameScreen() {
   }
 
   if (!config || !prizeTiers || board.length === 0) {
-    return <div className="flex h-full w-full items-center justify-center bg-navy text-white text-2xl">Carregando...</div>
+    return (
+      <div className="flex h-full w-full items-center justify-center bg-revi-gradient text-white text-2xl">
+        Carregando...
+      </div>
+    )
   }
 
   const movesLeft = config.movesPerRound - movesUsed
 
   return (
-    <div className="flex h-full w-full flex-col items-center bg-navy px-4 py-6 text-white">
-      <div className="mb-4 flex w-full max-w-2xl items-center justify-between px-2 text-lg font-semibold">
+    <div className="flex h-full w-full flex-col items-center bg-revi-gradient px-3 py-5 text-white">
+      <div className="mb-2 flex w-full max-w-3xl shrink-0 items-center justify-between px-2 text-lg font-semibold">
         <span>
-          Tentativa <span className="text-crayola">{roundIndex + 1}</span>/{config.maxAttempts}
+          Tentativa <span className="text-sky-400">{roundIndex + 1}</span>/{config.maxAttempts}
         </span>
         <span>
-          Pares: <span className="text-electric">{matchedPairIds.length}</span>/{totalPairs}
+          Pares: <span className="text-lime-400">{matchedPairIds.length}</span>/{totalPairs}
         </span>
         {phase !== 'memorize' && <span>Jogadas: {movesLeft}</span>}
       </div>
 
       {phase === 'memorize' ? (
-        <div className="mb-3 text-2xl font-bold text-electric">Memorize! {countdown}s</div>
+        <div className="mb-2 shrink-0 text-2xl font-bold text-lime-400">Memorize! {countdown}s</div>
       ) : (
-        <div className="mb-3 h-8" />
+        <div className="mb-2 h-8 shrink-0" />
       )}
 
-      <Board
-        cards={board}
-        cols={config.boardCols}
-        flippedUids={phase === 'memorize' ? board.map((c) => c.uid) : flippedUids}
-        matchedPairIds={matchedPairIds}
-        disabled={phase !== 'playing'}
-        onCardClick={handleCardClick}
-      />
+      <div className="min-h-0 w-full max-w-4xl flex-1">
+        <Board
+          cards={board}
+          cols={config.boardCols}
+          rows={config.boardRows}
+          flippedUids={phase === 'memorize' ? board.map((c) => c.uid) : flippedUids}
+          matchedPairIds={matchedPairIds}
+          disabled={phase !== 'playing'}
+          onCardClick={handleCardClick}
+        />
+      </div>
     </div>
   )
 }

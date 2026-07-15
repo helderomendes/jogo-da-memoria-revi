@@ -37,11 +37,11 @@ export default function ConfigEditor() {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-bold">Configurações do jogo</h2>
         <div className="flex items-center gap-3">
-          {savedAt && <span className="text-sm text-emerald-600">Salvo!</span>}
+          {savedAt && <span className="text-sm font-semibold text-lime-500">Salvo!</span>}
           <button
             type="button"
             onClick={handleSave}
-            className="rounded-lg bg-crayola px-4 py-2 text-sm font-semibold text-white hover:brightness-95"
+            className="rounded-full bg-brand-navy px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
           >
             Salvar alterações
           </button>
@@ -50,14 +50,14 @@ export default function ConfigEditor() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {FIELDS.map((field) => (
-          <div key={field.key} className="rounded-xl border border-slate-200 bg-white p-4">
+          <div key={field.key} className="rounded-lg border border-line-light bg-card-light p-4">
             <label className="mb-1 block text-sm font-semibold">{field.label}</label>
-            {field.hint && <p className="mb-2 text-xs text-slate-400">{field.hint}</p>}
+            {field.hint && <p className="mb-2 text-xs text-ink-dim">{field.hint}</p>}
             <input
               type="number"
               value={config[field.key]}
               onChange={(e) => updateField(field.key, e.target.value)}
-              className="w-full rounded border border-slate-300 px-3 py-2"
+              className="w-full rounded-md border border-line-light px-3 py-2"
             />
           </div>
         ))}

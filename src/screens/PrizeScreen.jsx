@@ -7,21 +7,21 @@ export default function PrizeScreen() {
   const { prizeTier, pickupCode } = session
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-between bg-navy px-8 py-14 text-center text-white">
-      <h1 className="font-headline text-4xl">
-        Parabéns, <span className="text-electric">{session.name.split(' ')[0]}</span>!
+    <div className="flex h-full w-full flex-col items-center justify-between bg-revi-gradient px-8 py-14 text-center text-white">
+      <h1 className="text-4xl font-bold tracking-tight">
+        Parabéns, <span className="text-lime-400">{session.name.split(' ')[0]}</span>!
       </h1>
 
       <div className="flex flex-col items-center gap-6">
         <Mascot className="h-40 w-40" />
-        <div className="rounded-2xl bg-white/10 px-8 py-6">
-          <p className="text-2xl font-bold text-electric">{prizeTier?.label}</p>
-          <p className="mt-2 max-w-sm text-lg text-white/75">{prizeTier?.description}</p>
+        <div className="rounded-[28px] border border-white/8 bg-white/4 px-8 py-6 shadow-card">
+          <p className="text-2xl font-bold text-lime-400">{prizeTier?.label}</p>
+          <p className="mt-2 max-w-sm text-lg text-ink-100">{prizeTier?.description}</p>
         </div>
 
         <div className="space-y-2">
-          <p className="text-lg text-white/70">Apresente esse código no balcão</p>
-          <p className="text-6xl font-extrabold tracking-widest text-crayola">{pickupCode}</p>
+          <p className="text-lg text-ink-300">Apresente esse código no balcão</p>
+          <p className="text-6xl font-extrabold tracking-widest text-sky-400">{pickupCode}</p>
         </div>
       </div>
 

@@ -58,15 +58,15 @@ export default function LogsTable() {
           type="button"
           onClick={handleExport}
           disabled={logs.length === 0}
-          className="rounded-lg bg-crayola px-4 py-2 text-sm font-semibold text-white hover:brightness-95 disabled:opacity-40"
+          className="rounded-full bg-brand-navy px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-40"
         >
           Exportar CSV
         </button>
       </div>
 
-      <div className="overflow-auto rounded-xl border border-slate-200 bg-white">
+      <div className="overflow-auto rounded-lg border border-line-light bg-card-light">
         <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
+          <thead className="bg-chip-light text-left text-ink-dim">
             <tr>
               {COLUMNS.map((c) => (
                 <th key={c.key} className="whitespace-nowrap px-4 py-2">
@@ -77,7 +77,7 @@ export default function LogsTable() {
           </thead>
           <tbody>
             {logs.map((log, i) => (
-              <tr key={i} className="border-t border-slate-100">
+              <tr key={i} className="border-t border-line-light">
                 <td className="px-4 py-2 whitespace-nowrap">
                   {new Date(log.timestamp).toLocaleString('pt-BR')}
                 </td>
@@ -91,7 +91,7 @@ export default function LogsTable() {
             ))}
             {logs.length === 0 && (
               <tr>
-                <td colSpan={COLUMNS.length} className="px-4 py-6 text-center text-slate-400">
+                <td colSpan={COLUMNS.length} className="px-4 py-6 text-center text-ink-dim">
                   Nenhuma partida registrada ainda.
                 </td>
               </tr>
