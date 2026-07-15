@@ -1,0 +1,53 @@
+const ROWS = [
+  ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+  ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+  ['Z', 'X', 'C', 'V', 'B', 'N', 'M'],
+]
+
+export default function VirtualKeyboard({ value, onChange, maxLength = 40 }) {
+  const pressKey = (key) => {
+    if (value.length >= maxLength) return
+    onChange(value + key)
+  }
+
+  const backspace = () => onChange(value.slice(0, -1))
+  const space = () => {
+    if (value.length >= maxLength) return
+    onChange(`${value} `)
+  }
+
+  return (
+    <div className="w-full max-w-3xl mx-auto select-none font-sora">
+      {ROWS.map((row, i) => (
+        <div key={i} className="flex justify-center gap-1.5 mb-1.5">
+          {row.map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => pressKey(key)}
+              className="flex-1 max-w-16 h-14 rounded-xl bg-white/10 text-white text-xl font-semibold active:bg-electric active:text-navy transition-colors"
+            >
+              {key}
+            </button>
+          ))}
+        </div>
+      ))}
+      <div className="flex justify-center gap-1.5">
+        <button
+          type="button"
+          onClick={space}
+          className="flex-[3] h-14 rounded-xl bg-white/10 text-white text-lg font-semibold active:bg-electric active:text-navy transition-colors"
+        >
+          espaço
+        </button>
+        <button
+          type="button"
+          onClick={backspace}
+          className="flex-[1.4] h-14 rounded-xl bg-white/20 text-white text-lg font-semibold active:bg-crayola transition-colors"
+        >
+          ⌫ apagar
+        </button>
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,30 @@
+// Banco fixo de pares de cartas. Cada item é um par (2 cartas iguais no tabuleiro).
+// `image` fica pronto para receber o artwork final de cada carta; até lá o card
+// mostra a `text` como placeholder.
+export const DEFAULT_CARDS = [
+  { id: 'p01', text: '34x de ROI', image: null },
+  { id: 'p02', text: '95% de abertura no WhatsApp', image: null },
+  { id: 'p03', text: 'Payback em 2,4 meses', image: null },
+  { id: 'p04', text: 'WhatsApp + Email + SMS', image: null },
+  { id: 'p05', text: 'Inbox do Instagram', image: null },
+  { id: 'p06', text: 'Claude + Revi', image: null },
+  { id: 'p07', text: 'ROI, a raposa', image: null },
+  { id: 'p08', text: 'ROI Makers Club', image: null },
+  { id: 'p09', text: 'Muito além do Inbox', image: null },
+  { id: 'p10', text: 'A Revi vende por você', image: null },
+  { id: 'p11', text: 'Vendas no WhatsApp', image: null },
+  { id: 'p12', text: 'ROI acima de 100x', image: null },
+  { id: 'p13', text: 'Wellness e Fitness', image: null },
+  { id: 'p14', text: 'Alimentação e Suplementos', image: null },
+  { id: 'p15', text: 'Moda e Beleza', image: null },
+  { id: 'p16', text: 'Joias e Acessórios', image: null },
+  { id: 'p17', text: '400+ e-commerces', image: null },
+  { id: 'p18', text: 'Revi Tag', image: null },
+  { id: 'p19', text: 'Carrinho recuperado', image: null },
+  { id: 'p20', text: 'Segmentação RFM', image: null },
+  { id: 'p21', text: 'Fluxos de Conversa', image: null },
+  { id: 'p22', text: 'CRM pra e-commerce', image: null },
+  { id: 'p23', text: 'Parceiro Meta', image: null },
+  { id: 'p24', text: 'Modo ROI ativado', image: null },
+  { id: 'p25', text: 'Revi 3 Anos', image: null },
+]
