@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
-import { getPrizeTiers, savePrizeTiers } from '../utils/dataStore'
+import { getGameConfig, getPrizeTiers, savePrizeTiers } from '../utils/dataStore'
 
 export default function PrizesEditor() {
   const [tiers, setTiers] = useState(null)
+  const [totalChances, setTotalChances] = useState(null)
   const [savedAt, setSavedAt] = useState(null)
 
   useEffect(() => {
     getPrizeTiers().then(setTiers)
+    getGameConfig().then((cfg) => setTotalChances(cfg.totalChances))
   }, [])
 
-  if (!tiers) return <p>Carregando...</p>
+  if (!tiers || totalChances === null) return <p>Carregando...</p>
 
   const updateTier = (id, field, value) => {
     setTiers((prev) => prev.map((t) => (t.id === id ? { ...t, [field]: value } : t)))
@@ -42,8 +44,9 @@ export default function PrizesEditor() {
       </div>
 
       <p className="mb-4 text-sm text-ink-dim">
-        "Pares certos" define quantos pares fechados liberam essa faixa (0 a 3, já que o jogo tem
-        3 chances). Deixe vazio pra faixas sem regra automática ainda.
+        "Pares certos" define quantos pares fechados liberam essa faixa (0 a {totalChances}, já
+        que o jogo tem {totalChances} chances — ajustável em Configurações). Deixe vazio pra
+        faixas sem regra automática ainda.
       </p>
 
       <div className="space-y-4">
@@ -54,7 +57,7 @@ export default function PrizesEditor() {
               <input
                 type="number"
                 min={0}
-                max={3}
+                max={totalChances}
                 value={tier.pairs ?? ''}
                 onChange={(e) => updatePairs(tier.id, e.target.value)}
                 placeholder="—"

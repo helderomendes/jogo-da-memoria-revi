@@ -33,6 +33,10 @@ export default function ConfigEditor() {
     setSavedAt(Date.now())
   }
 
+  const boardCells = config.boardRows * config.boardCols
+  const expectedCells = config.pairsPerGame * 2
+  const boardMismatch = boardCells !== expectedCells
+
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
@@ -48,6 +52,14 @@ export default function ConfigEditor() {
           </button>
         </div>
       </div>
+
+      {boardMismatch && (
+        <p className="mb-4 rounded-lg border border-warning/40 bg-warning/10 px-4 py-3 text-sm font-semibold text-warning">
+          Linhas × colunas do tabuleiro ({config.boardRows}×{config.boardCols} = {boardCells}{' '}
+          cartas) não bate com 2× pares sorteados ({config.pairsPerGame} pares = {expectedCells}{' '}
+          cartas). Ajuste um dos dois antes de salvar.
+        </p>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {FIELDS.map((field) => (

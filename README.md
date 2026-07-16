@@ -34,6 +34,6 @@ Toda leitura/escrita de dados passa por `src/utils/dataStore.js`. As funções j
 
 ## Regras do jogo
 
-- Banco fixo de 25 pares (`src/data/cards.js`). Cada partida sorteia 10 pares, evitando repetir os pares usados nas últimas N partidas (`antiRepeatLastGames` em `src/data/config.js`); se o pool elegível ficar pequeno, libera tudo de novo.
-- Até 3 tentativas com o mesmo conjunto de pares (posições reembaralhadas a cada tentativa). Cada tentativa começa com todas as cartas visíveis por alguns segundos (memorização) e tem um número limitado de jogadas (`movesPerRound`).
-- Faixas de prêmio configuráveis em `src/data/prizes.js` / painel admin.
+- Banco fixo de 25 pares (`src/data/cards.js`). Cada partida sorteia `pairsPerGame` pares, evitando repetir os pares usados nas últimas N partidas (`antiRepeatLastGames` em `src/data/config.js`); se o pool elegível ficar pequeno, libera tudo de novo.
+- O board é único por partida (sem rounds): depois de `memorizeSeconds` com todas as cartas viradas, o jogador tem `totalChances` chances totais — cada jogada (vire 2 cartas, acerte ou erre) consome 1 chance — e `guessSeconds` de cronômetro correndo em paralelo. O que acabar primeiro (chances ou tempo) encerra a partida.
+- Faixa de prêmio pela quantidade EXATA de pares certos ao final (0 pares = derrota, sem prêmio). Faixas configuráveis em `src/data/prizes.js` / painel admin — o admin edita `totalChances` em Configurações, então as faixas de prêmio devem cobrir de 1 até esse valor.
