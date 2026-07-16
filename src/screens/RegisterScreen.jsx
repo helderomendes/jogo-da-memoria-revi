@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Building2, Phone, User } from 'lucide-react'
 import { useKiosk } from '../context/KioskContext'
 import { formatPhoneBR } from '../utils/phoneMask'
 import VirtualKeyboard from '../components/VirtualKeyboard'
@@ -7,11 +8,40 @@ import Button from '../components/Button'
 import Logo from '../components/Logo'
 import ScreenTransition from '../components/ScreenTransition'
 import BackgroundGlow from '../components/BackgroundGlow'
+import GlassPanel from '../components/GlassPanel'
 
 const FIELD_STYLE = {
   name: 'border-lime-400',
   company: 'border-lime-400',
   phone: 'border-sky-500',
+}
+
+const FIELD_ICON = {
+  name: User,
+  phone: Phone,
+  company: Building2,
+}
+
+// Definido fora do RegisterScreen — um componente novo a cada render faria o
+// <input> remontar em toda tecla digitada e perder foco/valor.
+function Field({ field, active, ...props }) {
+  const Icon = FIELD_ICON[field]
+  return (
+    <div className="relative">
+      <Icon
+        size={22}
+        className={`absolute left-5 top-1/2 -translate-y-1/2 ${
+          active ? 'text-lime-400' : 'text-ink-300'
+        }`}
+      />
+      <input
+        {...props}
+        className={`w-full rounded-xl border-[1.5px] bg-white/4 pl-14 pr-6 py-5 text-left text-2xl font-semibold text-white outline-none transition-colors placeholder:text-ink-300 focus:bg-white/6 ${
+          active ? FIELD_STYLE[field] : 'border-white/8'
+        }`}
+      />
+    </div>
+  )
 }
 
 export default function RegisterScreen() {
@@ -36,50 +66,48 @@ export default function RegisterScreen() {
 
   const preventKeyboardFocusSteal = (e) => e.preventDefault()
 
-  const fieldClass = (field) =>
-    `w-full rounded-xl border-[1.5px] bg-white/4 px-6 py-5 text-left text-2xl font-semibold text-white outline-none transition-colors placeholder:text-ink-300 focus:bg-white/6 ${
-      activeField === field ? FIELD_STYLE[field] : 'border-white/8'
-    }`
-
   return (
-    <ScreenTransition className="relative flex h-full w-full flex-col items-center overflow-hidden bg-revi-gradient px-8 py-10 text-white">
+    <ScreenTransition className="relative flex h-full w-full flex-col items-center overflow-hidden bg-revi-gradient px-6 py-10 text-white">
       <BackgroundGlow />
       <Logo className="h-7 mb-6" />
 
-      <h1 className="text-4xl font-bold tracking-tight text-center mb-8">
+      <h1 className="text-4xl font-bold tracking-tight text-center mb-6">
         Antes de jogar, <span className="text-lime-400">como te chamamos?</span>
       </h1>
 
-      <div className="w-full max-w-xl space-y-4">
-        <input
+      <GlassPanel className="w-full max-w-xl space-y-4 p-6">
+        <Field
+          field="name"
+          active={activeField === 'name'}
           value={name}
           onChange={(e) => setName(e.target.value.slice(0, 40))}
           onFocus={() => setActiveField('name')}
           placeholder="Seu nome *"
           maxLength={40}
-          className={fieldClass('name')}
         />
 
-        <input
+        <Field
+          field="phone"
+          active={activeField === 'phone'}
           value={phone}
           onChange={(e) => setPhoneDigits(e.target.value.replace(/\D/g, '').slice(0, 11))}
           onFocus={() => setActiveField('phone')}
           type="tel"
           inputMode="numeric"
           placeholder="WhatsApp *"
-          className={fieldClass('phone')}
         />
 
-        <input
+        <Field
+          field="company"
+          active={activeField === 'company'}
           value={company}
           onChange={(e) => setCompany(e.target.value.slice(0, 60))}
           onFocus={() => setActiveField('company')}
           placeholder="Empresa / site *"
           maxLength={60}
-          className={fieldClass('company')}
         />
 
-        <label className="flex items-start gap-4 pt-2 text-lg text-ink-200">
+        <label className="flex items-start gap-4 pt-2 text-base text-ink-200">
           <input
             type="checkbox"
             checked={termsAccepted}
@@ -88,7 +116,7 @@ export default function RegisterScreen() {
           />
           Li e aceito os termos de uso e a política de privacidade (LGPD) da Revi. *
         </label>
-      </div>
+      </GlassPanel>
 
       <div
         className="mt-6 w-full max-w-xl flex-1 flex flex-col justify-center"

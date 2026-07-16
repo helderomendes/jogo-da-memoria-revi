@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
+import { Grid3x3, Target, Timer } from 'lucide-react'
 import { useKiosk } from '../context/KioskContext'
 import { buildBoard, determinePrize, generatePickupCode } from '../utils/gameEngine'
 import { getGameConfig, getPrizeTiers, appendGameLog } from '../utils/dataStore'
 import Board from '../components/Board'
 import Mascot from '../components/Mascot'
 import BackgroundGlow from '../components/BackgroundGlow'
+import Chip from '../components/Chip'
 
 const COMPARE_DELAY_MS = 700
 const STEP_DELAY_MS = 700
@@ -172,18 +174,12 @@ export default function GameScreen() {
 
   return (
     <div className="flex h-full w-full flex-col items-center bg-revi-gradient px-3 py-5 text-white">
-      <div className="mb-2 flex w-full max-w-3xl shrink-0 items-center justify-between px-2 text-lg font-semibold">
-        <span>
-          Chances: <span className="text-sky-400">{chancesLeft}</span>/{config.totalChances}
-        </span>
+      <div className="mb-2 flex w-full max-w-3xl shrink-0 flex-wrap items-center justify-center gap-2">
+        <Chip icon={Target} label="chances" value={`${chancesLeft}/${config.totalChances}`} tone="sky" />
         {phase !== 'memorize' && (
-          <span>
-            Tempo: <span className="text-warning">{guessCountdown}s</span>
-          </span>
+          <Chip icon={Timer} label="tempo" value={`${guessCountdown}s`} tone="sky" />
         )}
-        <span>
-          Pares: <span className="text-lime-400">{matchedPairIds.length}</span>/{totalPairs}
-        </span>
+        <Chip icon={Grid3x3} label="pares" value={`${matchedPairIds.length}/${totalPairs}`} tone="lime" />
       </div>
 
       {phase === 'memorize' ? (
