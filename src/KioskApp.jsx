@@ -5,7 +5,6 @@ import { useIdleTimer } from './utils/useIdleTimer'
 import IdleScreen from './screens/IdleScreen'
 import RegisterScreen from './screens/RegisterScreen'
 import InstructionsScreen from './screens/InstructionsScreen'
-import ThinkScreen from './screens/ThinkScreen'
 import GameScreen from './screens/GameScreen'
 import ResultScreen from './screens/ResultScreen'
 import PrizeScreen from './screens/PrizeScreen'
@@ -15,7 +14,6 @@ const SCREEN_COMPONENTS = {
   [SCREENS.IDLE]: IdleScreen,
   [SCREENS.REGISTER]: RegisterScreen,
   [SCREENS.INSTRUCTIONS]: InstructionsScreen,
-  [SCREENS.THINK]: ThinkScreen,
   [SCREENS.GAME]: GameScreen,
   [SCREENS.RESULT]: ResultScreen,
   [SCREENS.PRIZE]: PrizeScreen,
@@ -31,7 +29,14 @@ function KioskFlow() {
   }, [])
 
   useIdleTimer({
-    enabled: idleTimeoutMs != null && screen !== SCREENS.IDLE && screen !== SCREENS.THANKS,
+    // O jogo (GAME) já tem seus próprios cronômetros (memorização + tempo de
+    // jogo) que encerram a partida sozinhos — não pode competir com o timer
+    // genérico de inatividade, que costuma ser mais curto.
+    enabled:
+      idleTimeoutMs != null &&
+      screen !== SCREENS.IDLE &&
+      screen !== SCREENS.THANKS &&
+      screen !== SCREENS.GAME,
     timeoutMs: idleTimeoutMs ?? 30000,
     onIdle: resetToIdle,
   })

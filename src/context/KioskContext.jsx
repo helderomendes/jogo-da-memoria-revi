@@ -4,7 +4,6 @@ export const SCREENS = {
   IDLE: 'idle',
   REGISTER: 'register',
   INSTRUCTIONS: 'instructions',
-  THINK: 'think',
   GAME: 'game',
   RESULT: 'result',
   PRIZE: 'prize',
@@ -46,8 +45,6 @@ export function KioskProvider({ children }) {
     setScreen(SCREENS.INSTRUCTIONS)
   }, [])
 
-  const goToThink = useCallback(() => setScreen(SCREENS.THINK), [])
-
   const startGame = useCallback((gameSetup) => {
     setSession((prev) => ({ ...prev, ...gameSetup }))
     setScreen(SCREENS.GAME)
@@ -68,7 +65,6 @@ export function KioskProvider({ children }) {
     resetToIdle,
     startRegistration,
     submitRegistration,
-    goToThink,
     startGame,
     finishGame,
     goToPrize,
