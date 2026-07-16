@@ -1,6 +1,5 @@
 import { Gift, Grid3x3, Timer } from 'lucide-react'
 import { useKiosk } from '../context/KioskContext'
-import Mascot from '../components/Mascot'
 import Logo from '../components/Logo'
 import BackgroundGlow from '../components/BackgroundGlow'
 import GlassPanel from '../components/GlassPanel'
@@ -13,14 +12,15 @@ export default function IdleScreen() {
     <button
       type="button"
       onClick={startRegistration}
-      className="relative flex h-full w-full flex-col items-center justify-between overflow-hidden bg-revi-gradient px-6 py-12 text-center"
+      className="relative flex min-h-full w-full flex-col items-center overflow-hidden bg-revi-gradient px-6 py-12 text-center"
     >
       <BackgroundGlow />
 
-      <div className="flex flex-1 flex-col items-center justify-center gap-6 w-full">
-        <GlassPanel className="flex w-full max-w-md flex-col items-center gap-5 px-8 py-10">
-          <Mascot className="h-56 w-56" floaty />
-          <h1 className="text-5xl font-bold tracking-tight text-white">
+      <Logo className="h-12 shrink-0 mb-10 sm:h-14" />
+
+      <div className="flex w-full max-w-[440px] flex-1 flex-col items-center justify-center gap-8">
+        <GlassPanel className="flex w-full flex-col items-center gap-4 px-8 py-10">
+          <h1 className="text-6xl sm:text-7xl font-extrabold uppercase leading-[0.95] tracking-tight text-white">
             Jogo da <span className="text-lime-400">Memória</span>
           </h1>
           <p className="max-w-sm text-lg text-ink-200">
@@ -33,13 +33,10 @@ export default function IdleScreen() {
           <Chip icon={Timer} label="tempo" value="40s" tone="sky" />
           <Chip icon={Gift} label="prêmios" value="4" tone="lime" />
         </div>
-      </div>
 
-      <div className="flex flex-col items-center gap-6">
         <div className="rounded-full bg-lime-400 px-14 py-6 text-3xl font-bold text-navy-950 animate-[pulseGlow_2.2s_ease-in-out_infinite]">
           Toque para jogar
         </div>
-        <Logo className="h-6 opacity-70" />
       </div>
     </button>
   )

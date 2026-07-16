@@ -67,11 +67,11 @@ export default function RegisterScreen() {
   const preventKeyboardFocusSteal = (e) => e.preventDefault()
 
   return (
-    <ScreenTransition className="relative flex h-full w-full flex-col items-center overflow-hidden bg-revi-gradient px-6 py-10 text-white">
+    <ScreenTransition className="relative flex min-h-full w-full flex-col items-center bg-revi-gradient px-6 py-10 text-white">
       <BackgroundGlow />
-      <Logo className="h-7 mb-6" />
+      <Logo className="h-10 mb-8 sm:h-12" />
 
-      <h1 className="text-4xl font-bold tracking-tight text-center mb-6">
+      <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-center mb-6">
         Antes de jogar, <span className="text-lime-400">como te chamamos?</span>
       </h1>
 

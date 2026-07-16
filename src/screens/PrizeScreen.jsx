@@ -1,8 +1,7 @@
 import { Candy, CreditCard, CupSoda, ShoppingBag } from 'lucide-react'
 import { useKiosk } from '../context/KioskContext'
 import Button from '../components/Button'
-import ScreenTransition from '../components/ScreenTransition'
-import BackgroundGlow from '../components/BackgroundGlow'
+import KioskScreen from '../components/KioskScreen'
 import GlassPanel from '../components/GlassPanel'
 import IconBadge from '../components/IconBadge'
 
@@ -19,9 +18,8 @@ export default function PrizeScreen() {
   const WonIcon = PRIZE_ICONS[prizeTier?.id] ?? Candy
 
   return (
-    <ScreenTransition className="relative flex h-full w-full flex-col items-center justify-between overflow-hidden bg-revi-gradient px-8 py-14 text-center text-white">
-      <BackgroundGlow />
-      <h1 className="text-4xl font-bold tracking-tight">
+    <KioskScreen>
+      <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
         Parabéns, <span className="text-lime-400">{session.name.split(' ')[0]}</span>!
       </h1>
 
@@ -41,7 +39,7 @@ export default function PrizeScreen() {
         })}
       </div>
 
-      <GlassPanel className="flex flex-col items-center gap-2 px-8 py-6 animate-[pop_0.5s_ease-out_backwards]">
+      <GlassPanel className="flex w-full flex-col items-center gap-2 px-8 py-6 animate-[pop_0.5s_ease-out_backwards]">
         <IconBadge icon={WonIcon} tone="lime" size={56} />
         <p className="mt-2 text-2xl font-bold text-lime-400">{prizeTier?.label}</p>
         <p className="max-w-sm text-lg text-ink-100">{prizeTier?.description}</p>
@@ -52,9 +50,9 @@ export default function PrizeScreen() {
         <p className="text-6xl font-extrabold tracking-widest text-sky-400">{pickupCode}</p>
       </div>
 
-      <Button onClick={goToThanks} className="w-full max-w-md">
+      <Button onClick={goToThanks} className="w-full">
         Concluir
       </Button>
-    </ScreenTransition>
+    </KioskScreen>
   )
 }

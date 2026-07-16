@@ -4,7 +4,7 @@ import { useKiosk } from '../context/KioskContext'
 import { buildBoard, determinePrize, generatePickupCode } from '../utils/gameEngine'
 import { getGameConfig, getPrizeTiers, appendGameLog } from '../utils/dataStore'
 import Board from '../components/Board'
-import Mascot from '../components/Mascot'
+import Logo from '../components/Logo'
 import BackgroundGlow from '../components/BackgroundGlow'
 import Chip from '../components/Chip'
 
@@ -161,10 +161,10 @@ export default function GameScreen() {
     return (
       <div className="relative flex h-full w-full flex-col items-center justify-center gap-10 overflow-hidden bg-revi-gradient text-white">
         <BackgroundGlow />
-        <Mascot className="h-36 w-36" floaty />
+        <Logo className="h-10 absolute top-10" />
         <div
           key={readyIndex}
-          className="animate-[pop_0.4s_ease-out_backwards] text-8xl font-extrabold tracking-tight text-lime-400"
+          className="animate-[pop_0.4s_ease-out_backwards] text-8xl sm:text-9xl font-extrabold tracking-tight text-lime-400"
         >
           {readySteps[readyIndex]}
         </div>
