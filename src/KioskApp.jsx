@@ -5,6 +5,7 @@ import { useIdleTimer } from './utils/useIdleTimer'
 import IdleScreen from './screens/IdleScreen'
 import RegisterScreen from './screens/RegisterScreen'
 import InstructionsScreen from './screens/InstructionsScreen'
+import ThinkScreen from './screens/ThinkScreen'
 import GameScreen from './screens/GameScreen'
 import ResultScreen from './screens/ResultScreen'
 import PrizeScreen from './screens/PrizeScreen'
@@ -14,6 +15,7 @@ const SCREEN_COMPONENTS = {
   [SCREENS.IDLE]: IdleScreen,
   [SCREENS.REGISTER]: RegisterScreen,
   [SCREENS.INSTRUCTIONS]: InstructionsScreen,
+  [SCREENS.THINK]: ThinkScreen,
   [SCREENS.GAME]: GameScreen,
   [SCREENS.RESULT]: ResultScreen,
   [SCREENS.PRIZE]: PrizeScreen,

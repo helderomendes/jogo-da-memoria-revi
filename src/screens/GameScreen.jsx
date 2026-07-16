@@ -11,14 +11,13 @@ export default function GameScreen() {
   const [config, setConfig] = useState(null)
   const [prizeTiers, setPrizeTiers] = useState(null)
 
-  const [roundIndex, setRoundIndex] = useState(0)
   const [board, setBoard] = useState([])
   const [phase, setPhase] = useState('memorize') // 'memorize' | 'playing' | 'locked'
   const [countdown, setCountdown] = useState(null)
+  const [chancesLeft, setChancesLeft] = useState(null)
   const [flippedUids, setFlippedUids] = useState([])
   const [matchedPairIds, setMatchedPairIds] = useState([])
-  const [movesUsed, setMovesUsed] = useState(0)
-  const [attempts, setAttempts] = useState([])
+  const [wrongFlash, setWrongFlash] = useState([])
 
   const totalPairs = session.pairs.length
 
@@ -26,19 +25,12 @@ export default function GameScreen() {
     Promise.all([getGameConfig(), getPrizeTiers()]).then(([cfg, tiers]) => {
       setConfig(cfg)
       setPrizeTiers(tiers)
+      setChancesLeft(cfg.totalChances)
+      setBoard(buildBoard(session.pairs))
+      setCountdown(cfg.memorizeSeconds)
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  // Início de cada rodada: monta tabuleiro novo e entra em fase de memorização.
-  useEffect(() => {
-    if (!config) return
-    setBoard(buildBoard(session.pairs))
-    setFlippedUids([])
-    setMatchedPairIds([])
-    setMovesUsed(0)
-    setPhase('memorize')
-    setCountdown(config.memorizeSeconds)
-  }, [roundIndex, config])
 
   useEffect(() => {
     if (phase !== 'memorize' || !config || countdown === null) return
@@ -50,48 +42,30 @@ export default function GameScreen() {
     return () => clearTimeout(t)
   }, [phase, countdown, config])
 
-  const finalizeGame = async (finishedAttempts) => {
-    const { tier, bestMatches } = determinePrize({
-      attempts: finishedAttempts,
-      totalPairs,
-      prizeTiers,
-      standardPrizeMinPairs: config.standardPrizeMinPairs,
-    })
-    const pickupCode = generatePickupCode()
+  const finalizeGame = async (correctPairs) => {
+    const isWin = correctPairs > 0
+    const tier = isWin ? determinePrize(correctPairs, prizeTiers) : null
+    const pickupCode = isWin ? generatePickupCode() : null
 
     await appendGameLog({
       name: session.name,
       phone: session.phone || null,
+      company: session.company || null,
       timestamp: new Date().toISOString(),
       pairsSorteados: session.pairs.map((p) => p.id),
-      tentativasUsadas: finishedAttempts.length,
-      paresCertosPorTentativa: finishedAttempts.map((a) => a.matchesFound),
-      premioGanho: tier.label,
+      chancesUsadas: config.totalChances,
+      paresCertos: correctPairs,
+      premioGanho: tier?.label ?? 'Nenhum (0 pares)',
       codigoRetirada: pickupCode,
     })
 
     finishGame({
-      attempts: finishedAttempts,
-      bestMatches,
+      correctPairs,
       totalPairs,
+      isWin,
       prizeTier: tier,
       pickupCode,
     })
-  }
-
-  const endRound = (finalMatchedPairIds) => {
-    const attempt = { matchesFound: finalMatchedPairIds.length }
-    const updatedAttempts = [...attempts, attempt]
-    setAttempts(updatedAttempts)
-
-    const fullyCleared = finalMatchedPairIds.length === totalPairs
-    const isLastRound = roundIndex + 1 >= config.maxAttempts
-
-    if (fullyCleared || isLastRound) {
-      finalizeGame(updatedAttempts)
-    } else {
-      setRoundIndex((r) => r + 1)
-    }
   }
 
   const handleCardClick = (card) => {
@@ -112,18 +86,20 @@ export default function GameScreen() {
 
     setTimeout(() => {
       const newMatched = isMatch ? [...matchedPairIds, firstCard.pairId] : matchedPairIds
-      const newMovesUsed = movesUsed + 1
+      const newChancesLeft = chancesLeft - 1
 
+      if (!isMatch) setWrongFlash(nextFlipped)
       setMatchedPairIds(newMatched)
-      setMovesUsed(newMovesUsed)
+      setChancesLeft(newChancesLeft)
       setFlippedUids([])
 
-      const roundOver = newMatched.length === totalPairs || newMovesUsed >= config.movesPerRound
-      if (roundOver) {
-        endRound(newMatched)
+      const gameOver = newChancesLeft <= 0 || newMatched.length === totalPairs
+      if (gameOver) {
+        finalizeGame(newMatched.length)
       } else {
         setPhase('playing')
       }
+      setTimeout(() => setWrongFlash([]), 400)
     }, COMPARE_DELAY_MS)
   }
 
@@ -135,18 +111,15 @@ export default function GameScreen() {
     )
   }
 
-  const movesLeft = config.movesPerRound - movesUsed
-
   return (
     <div className="flex h-full w-full flex-col items-center bg-revi-gradient px-3 py-5 text-white">
       <div className="mb-2 flex w-full max-w-3xl shrink-0 items-center justify-between px-2 text-lg font-semibold">
         <span>
-          Tentativa <span className="text-sky-400">{roundIndex + 1}</span>/{config.maxAttempts}
+          Chances: <span className="text-sky-400">{chancesLeft}</span>/{config.totalChances}
         </span>
         <span>
           Pares: <span className="text-lime-400">{matchedPairIds.length}</span>/{totalPairs}
         </span>
-        {phase !== 'memorize' && <span>Jogadas: {movesLeft}</span>}
       </div>
 
       {phase === 'memorize' ? (
@@ -162,6 +135,7 @@ export default function GameScreen() {
           rows={config.boardRows}
           flippedUids={phase === 'memorize' ? board.map((c) => c.uid) : flippedUids}
           matchedPairIds={matchedPairIds}
+          wrongUids={wrongFlash}
           disabled={phase !== 'playing'}
           onCardClick={handleCardClick}
         />

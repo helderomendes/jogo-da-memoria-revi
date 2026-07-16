@@ -15,6 +15,11 @@ export default function PrizesEditor() {
     setTiers((prev) => prev.map((t) => (t.id === id ? { ...t, [field]: value } : t)))
   }
 
+  const updatePairs = (id, rawValue) => {
+    const pairs = rawValue === '' ? null : Number(rawValue)
+    updateTier(id, 'pairs', pairs)
+  }
+
   const handleSave = async () => {
     await savePrizeTiers(tiers)
     setSavedAt(Date.now())
@@ -36,12 +41,26 @@ export default function PrizesEditor() {
         </div>
       </div>
 
+      <p className="mb-4 text-sm text-ink-dim">
+        "Pares certos" define quantos pares fechados liberam essa faixa (0 a 3, já que o jogo tem
+        3 chances). Deixe vazio pra faixas sem regra automática ainda.
+      </p>
+
       <div className="space-y-4">
         {tiers.map((tier) => (
           <div key={tier.id} className="rounded-lg border border-line-light bg-card-light p-4">
-            <p className="mb-2 text-xs uppercase tracking-wide text-ink-dim">
-              Regra: {tier.rule}
-            </p>
+            <div className="mb-3 flex items-center gap-3">
+              <label className="text-sm font-semibold">Pares certos</label>
+              <input
+                type="number"
+                min={0}
+                max={3}
+                value={tier.pairs ?? ''}
+                onChange={(e) => updatePairs(tier.id, e.target.value)}
+                placeholder="—"
+                className="w-20 rounded-md border border-line-light px-3 py-2 text-center"
+              />
+            </div>
             <label className="mb-2 block text-sm font-semibold">Nome do prêmio</label>
             <input
               value={tier.label}

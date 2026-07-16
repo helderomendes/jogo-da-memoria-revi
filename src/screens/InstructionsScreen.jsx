@@ -1,37 +1,24 @@
 import { useEffect, useState } from 'react'
 import { useKiosk } from '../context/KioskContext'
-import { getCards, getGameConfig, getPairHistory, pushPairHistory } from '../utils/dataStore'
-import { selectPairsForNewGame } from '../utils/gameEngine'
+import { getGameConfig } from '../utils/dataStore'
 import Button from '../components/Button'
 import Mascot from '../components/Mascot'
+import ScreenTransition from '../components/ScreenTransition'
+import BackgroundGlow from '../components/BackgroundGlow'
 
 export default function InstructionsScreen() {
-  const { session, startGame } = useKiosk()
+  const { session, goToThink } = useKiosk()
   const [config, setConfig] = useState(null)
-  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     getGameConfig().then(setConfig)
   }, [])
 
-  const handleStart = async () => {
-    setLoading(true)
-    const [cards, gameConfig, history] = await Promise.all([
-      getCards(),
-      getGameConfig(),
-      getPairHistory(),
-    ])
-
-    const { pairs, usedFullPool } = selectPairsForNewGame(cards, history, gameConfig.pairsPerGame)
-    await pushPairHistory(pairs.map((p) => p.id), gameConfig.antiRepeatLastGames)
-
-    startGame({ pairs, totalPairs: pairs.length, usedFullPool })
-  }
-
   if (!config) return null
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-between bg-revi-gradient px-8 py-12 text-center text-white">
+    <ScreenTransition className="relative flex h-full w-full flex-col items-center justify-between overflow-hidden bg-revi-gradient px-8 py-12 text-center text-white">
+      <BackgroundGlow />
       <h1 className="text-4xl font-bold tracking-tight">
         Oi, <span className="text-lime-400">{session.name.split(' ')[0]}</span>!
       </h1>
@@ -46,15 +33,16 @@ export default function InstructionsScreen() {
           </p>
           <p>Depois as cartas viram pra baixo e você toca pra formar os pares.</p>
           <p>
-            Você tem até <strong className="text-sky-400">{config.maxAttempts} tentativas</strong>{' '}
-            pra fechar todos os pares.
+            Você tem só{' '}
+            <strong className="text-sky-400">{config.totalChances} chances no total</strong> — cada
+            jogada, certa ou errada, gasta uma. Acabaram as chances, acabou o jogo.
           </p>
         </div>
       </div>
 
-      <Button onClick={handleStart} disabled={loading} className="w-full max-w-md">
-        {loading ? 'Preparando...' : 'Começar jogo'}
+      <Button onClick={goToThink} className="w-full max-w-md">
+        Entendi, vamos lá
       </Button>
-    </div>
+    </ScreenTransition>
   )
 }

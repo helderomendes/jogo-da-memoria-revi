@@ -4,6 +4,7 @@ export const SCREENS = {
   IDLE: 'idle',
   REGISTER: 'register',
   INSTRUCTIONS: 'instructions',
+  THINK: 'think',
   GAME: 'game',
   RESULT: 'result',
   PRIZE: 'prize',
@@ -15,12 +16,13 @@ const KioskContext = createContext(null)
 const emptySession = () => ({
   name: '',
   phone: '',
+  company: '',
   startedAt: null,
   pairs: [],
   usedFullPool: false,
-  attempts: [],
-  bestMatches: 0,
   totalPairs: 0,
+  correctPairs: 0,
+  isWin: false,
   prizeTier: null,
   pickupCode: null,
 })
@@ -39,13 +41,15 @@ export function KioskProvider({ children }) {
     setScreen(SCREENS.REGISTER)
   }, [])
 
-  const submitRegistration = useCallback(({ name, phone }) => {
-    setSession((prev) => ({ ...prev, name, phone, startedAt: Date.now() }))
+  const submitRegistration = useCallback(({ name, phone, company }) => {
+    setSession((prev) => ({ ...prev, name, phone, company, startedAt: Date.now() }))
     setScreen(SCREENS.INSTRUCTIONS)
   }, [])
 
+  const goToThink = useCallback(() => setScreen(SCREENS.THINK), [])
+
   const startGame = useCallback((gameSetup) => {
-    setSession((prev) => ({ ...prev, ...gameSetup, attempts: [] }))
+    setSession((prev) => ({ ...prev, ...gameSetup }))
     setScreen(SCREENS.GAME)
   }, [])
 
@@ -54,10 +58,7 @@ export function KioskProvider({ children }) {
     setScreen(SCREENS.RESULT)
   }, [])
 
-  const goToPrize = useCallback((prizeInfo) => {
-    setSession((prev) => ({ ...prev, ...prizeInfo }))
-    setScreen(SCREENS.PRIZE)
-  }, [])
+  const goToPrize = useCallback(() => setScreen(SCREENS.PRIZE), [])
 
   const goToThanks = useCallback(() => setScreen(SCREENS.THANKS), [])
 
@@ -67,6 +68,7 @@ export function KioskProvider({ children }) {
     resetToIdle,
     startRegistration,
     submitRegistration,
+    goToThink,
     startGame,
     finishGame,
     goToPrize,

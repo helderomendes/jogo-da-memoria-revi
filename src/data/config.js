@@ -1,15 +1,16 @@
 // Configuração geral do jogo. Editável no painel admin, persistida via dataStore.
 export const DEFAULT_GAME_CONFIG = {
-  pairsPerGame: 10,
-  // Totem é retrato: mais linhas que colunas aproveita melhor a altura da tela.
-  boardRows: 5,
+  pairsPerGame: 8,
+  // 4x4 = 16 cartas. Board quadrado funciona bem em retrato.
+  boardRows: 4,
   boardCols: 4,
-  memorizeSeconds: 5,
-  maxAttempts: 3,
-  // Jogadas (flips de 2 cartas) disponíveis por rodada. Limita a rodada pra
-  // que "não completar" seja um resultado possível mesmo sem pressa.
-  movesPerRound: 10,
-  standardPrizeMinPairs: 6,
+  // Tempo pra pensar antes do board aparecer (tela "Pense").
+  thinkSeconds: 40,
+  // Segundos com todas as cartas viradas pra memorizar, antes de virar pra baixo.
+  memorizeSeconds: 3,
+  // Chances totais do jogo (não por rodada). Cada jogada — vire 2 cartas,
+  // acerte ou erre — consome 1 chance. Zerou as chances, acabou o jogo.
+  totalChances: 3,
   antiRepeatLastGames: 2,
   idleTimeoutMs: 25000,
   thanksScreenMs: 5000,

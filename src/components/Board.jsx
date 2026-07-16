@@ -1,6 +1,15 @@
 import Card from './Card'
 
-export default function Board({ cards, flippedUids, matchedPairIds, onCardClick, disabled, cols, rows }) {
+export default function Board({
+  cards,
+  flippedUids,
+  matchedPairIds,
+  wrongUids = [],
+  onCardClick,
+  disabled,
+  cols,
+  rows,
+}) {
   return (
     <div className="flex h-full w-full items-center justify-center overflow-hidden">
       <div
@@ -11,12 +20,14 @@ export default function Board({ cards, flippedUids, matchedPairIds, onCardClick,
           maxHeight: '100%',
         }}
       >
-        {cards.map((card) => (
+        {cards.map((card, i) => (
           <Card
             key={card.uid}
             card={card}
+            index={i}
             isFlipped={flippedUids.includes(card.uid) || matchedPairIds.includes(card.pairId)}
             isMatched={matchedPairIds.includes(card.pairId)}
+            isWrong={wrongUids.includes(card.uid)}
             disabled={disabled || matchedPairIds.includes(card.pairId)}
             onClick={() => onCardClick(card)}
           />

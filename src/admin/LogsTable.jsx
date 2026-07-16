@@ -5,8 +5,9 @@ const COLUMNS = [
   { key: 'timestamp', label: 'Data/hora' },
   { key: 'name', label: 'Nome' },
   { key: 'phone', label: 'Telefone' },
-  { key: 'tentativasUsadas', label: 'Tentativas' },
-  { key: 'paresCertosPorTentativa', label: 'Pares certos por tentativa' },
+  { key: 'company', label: 'Empresa/site' },
+  { key: 'chancesUsadas', label: 'Chances usadas' },
+  { key: 'paresCertos', label: 'Pares certos' },
   { key: 'premioGanho', label: 'Prêmio' },
   { key: 'codigoRetirada', label: 'Código' },
 ]
@@ -83,10 +84,11 @@ export default function LogsTable() {
                 </td>
                 <td className="px-4 py-2">{log.name}</td>
                 <td className="px-4 py-2">{log.phone ?? '-'}</td>
-                <td className="px-4 py-2">{log.tentativasUsadas}</td>
-                <td className="px-4 py-2">{log.paresCertosPorTentativa?.join(', ')}</td>
+                <td className="px-4 py-2">{log.company ?? '-'}</td>
+                <td className="px-4 py-2">{log.chancesUsadas}</td>
+                <td className="px-4 py-2">{log.paresCertos}</td>
                 <td className="px-4 py-2">{log.premioGanho}</td>
-                <td className="px-4 py-2">{log.codigoRetirada}</td>
+                <td className="px-4 py-2">{log.codigoRetirada ?? '-'}</td>
               </tr>
             ))}
             {logs.length === 0 && (
