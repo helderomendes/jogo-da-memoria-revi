@@ -147,7 +147,7 @@ export default function GameScreen() {
       } else {
         setPhase('playing')
       }
-      setTimeout(() => setWrongFlash([]), 400)
+      setTimeout(() => setWrongFlash([]), 800)
     }, COMPARE_DELAY_MS)
   }
 

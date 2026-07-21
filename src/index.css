@@ -165,9 +165,139 @@
   }
 }
 
+@keyframes swayFan {
+  0%,
+  100% {
+    transform: rotate(-1.4deg);
+  }
+  50% {
+    transform: rotate(1.4deg);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.7);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1);
+  }
+}
+
+@keyframes floatCard {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+@keyframes sheenSweep {
+  0% {
+    transform: translateX(-120%) skewX(-18deg);
+  }
+  60%,
+  100% {
+    transform: translateX(220%) skewX(-18deg);
+  }
+}
+
+@keyframes titleShine {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+/* Roda giratória: os cards ficam presos num círculo grande (centro abaixo do
+   rodapé) e giram continuamente, cada um alinhado radialmente ao círculo —
+   sobem por um lado, cruzam o topo e descem pelo outro, como um carrossel. */
+@keyframes wheelSpin {
+  from {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateX(-50%) rotate(360deg);
+  }
+}
+
+/* Profundidade sincronizada com o giro: a carta cresce e fica opaca no topo
+   (à frente) e encolhe/transparece ao descer (ao fundo). O atraso por carta
+   alinha o pico ao momento em que ela passa pelo ponto mais alto da roda. */
+@keyframes depthPulse {
+  0%,
+  100% {
+    transform: scale(1.18);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+}
+
+/* Flash de acerto — brilho verde forte que decai pro glow de repouso. */
+@keyframes flashLime {
+  0% {
+    box-shadow: 0 0 0 1px rgba(101, 242, 75, 0.3);
+  }
+  30% {
+    box-shadow:
+      0 0 0 2px rgba(101, 242, 75, 0.95),
+      0 0 70px 8px rgba(101, 242, 75, 0.9);
+  }
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(101, 242, 75, 0.3),
+      0 12px 40px -8px rgba(101, 242, 75, 0.45);
+  }
+}
+
+/* Flash de erro — brilho vermelho forte que decai. */
+@keyframes flashDanger {
+  0% {
+    box-shadow: 0 0 0 1px rgba(255, 107, 107, 0.3);
+  }
+  28% {
+    box-shadow:
+      0 0 0 2px rgba(255, 107, 107, 0.95),
+      0 0 65px 8px rgba(255, 107, 107, 0.85);
+  }
+  100% {
+    box-shadow: 0 0 0 1px rgba(255, 107, 107, 0.4);
+  }
+}
+
+/* Pop sutil na carta ao acertar. */
+@keyframes matchPop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 @layer utilities {
   .bg-revi-gradient {
     background: radial-gradient(120% 80% at 50% 0%, #1a2a7a 0%, #0a1030 55%, #05091f 100%);
+  }
+
+  /* Textura sutil de pontos no tom azul da marca — dá "grão" sem destoar. */
+  .bg-dot-grid {
+    background-image: radial-gradient(rgba(124, 198, 255, 0.09) 1px, transparent 1.4px);
+    background-size: 30px 30px;
   }
 
   .shadow-card {

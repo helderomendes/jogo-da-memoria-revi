@@ -45,7 +45,7 @@ function Field({ field, active, ...props }) {
 }
 
 export default function RegisterScreen() {
-  const { submitRegistration } = useKiosk()
+  const { submitRegistration, resetToIdle } = useKiosk()
   const [name, setName] = useState('')
   const [company, setCompany] = useState('')
   const [phoneDigits, setPhoneDigits] = useState('')
@@ -69,7 +69,7 @@ export default function RegisterScreen() {
   return (
     <ScreenTransition className="relative flex min-h-full w-full flex-col items-center bg-revi-gradient px-6 py-10 text-white">
       <BackgroundGlow />
-      <Logo className="h-10 mb-8 sm:h-12" />
+      <Logo className="h-10 mb-8 sm:h-12" onClick={resetToIdle} />
 
       <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-center mb-6">
         Antes de jogar, <span className="text-lime-400">como te chamamos?</span>
