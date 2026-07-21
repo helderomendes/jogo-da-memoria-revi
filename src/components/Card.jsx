@@ -30,7 +30,7 @@ export default function Card({ card, index = 0, isFlipped, isMatched, isWrong, o
                   : 'border-white/8 bg-navy-800 shadow-card'
             }`}
           >
-            {card.image ? (
+            {card.mode === 'image' && card.image ? (
               <img src={card.image} alt={card.text} className="h-full w-full object-cover rounded-md" />
             ) : (
               <p

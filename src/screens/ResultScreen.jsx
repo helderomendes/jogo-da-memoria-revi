@@ -25,7 +25,9 @@ export default function ResultScreen() {
 
         <GlassPanel className="flex w-full flex-col items-center gap-5 px-8 py-10">
           <p className="text-xl text-ink-100">
-            Você usou suas {totalChances ?? 3} chances e não fechou nenhum par dessa vez.
+            {correctPairs > 0
+              ? `Você fechou ${correctPairs} ${correctPairs === 1 ? 'par' : 'pares'}, mas os brindes acabaram por agora.`
+              : `Você usou suas ${totalChances ?? 3} chances e não fechou nenhum par dessa vez.`}
           </p>
           <p className="text-lg text-ink-300">Bora tentar de novo?</p>
         </GlassPanel>

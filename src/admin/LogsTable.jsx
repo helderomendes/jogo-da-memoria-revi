@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react'
-import { getGameLogs } from '../utils/dataStore'
+import { useEffect, useMemo, useState } from 'react'
+import { Search, Download, Trash2 } from 'lucide-react'
+import { getGameLogs, clearGameLogs } from '../utils/dataStore'
 
 const COLUMNS = [
   { key: 'timestamp', label: 'Data/hora' },
@@ -33,36 +34,76 @@ function logsToCSV(logs) {
 
 export default function LogsTable() {
   const [logs, setLogs] = useState(null)
+  const [query, setQuery] = useState('')
 
   useEffect(() => {
     getGameLogs().then((data) => setLogs([...data].reverse()))
   }, [])
 
+  const filtered = useMemo(() => {
+    if (!logs) return []
+    const q = query.trim().toLowerCase()
+    if (!q) return logs
+    return logs.filter((log) =>
+      [log.name, log.phone, log.company, log.premioGanho, log.codigoRetirada]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q)),
+    )
+  }, [logs, query])
+
   if (!logs) return <p>Carregando...</p>
 
   const handleExport = () => {
-    const csv = logsToCSV(logs)
+    const csv = logsToCSV(filtered)
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `revi-memoria-log-${Date.now()}.csv`
+    link.download = `revi-memoria-leads-${Date.now()}.csv`
     link.click()
     URL.revokeObjectURL(url)
   }
 
+  const handleClear = async () => {
+    if (!window.confirm('Apagar TODOS os leads/partidas registrados? Essa ação não pode ser desfeita.')) return
+    await clearGameLogs()
+    setLogs([])
+  }
+
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-bold">Log de partidas ({logs.length})</h2>
-        <button
-          type="button"
-          onClick={handleExport}
-          disabled={logs.length === 0}
-          className="rounded-full bg-brand-navy px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-40"
-        >
-          Exportar CSV
-        </button>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-lg font-bold">
+          Leads &amp; partidas ({filtered.length}
+          {query ? ` de ${logs.length}` : ''})
+        </h2>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-dim" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar nome, telefone, prêmio..."
+              className="w-64 rounded-full border border-line-light bg-card-light py-2 pl-9 pr-4 text-sm"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={filtered.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-full bg-brand-navy px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-40"
+          >
+            <Download size={15} /> Exportar CSV
+          </button>
+          <button
+            type="button"
+            onClick={handleClear}
+            disabled={logs.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-full border border-line-light px-4 py-2 text-sm font-semibold text-red-500 hover:bg-red-50 disabled:opacity-40"
+          >
+            <Trash2 size={15} /> Limpar
+          </button>
+        </div>
       </div>
 
       <div className="overflow-auto rounded-lg border border-line-light bg-card-light">
@@ -77,7 +118,7 @@ export default function LogsTable() {
             </tr>
           </thead>
           <tbody>
-            {logs.map((log, i) => (
+            {filtered.map((log, i) => (
               <tr key={i} className="border-t border-line-light">
                 <td className="px-4 py-2 whitespace-nowrap">
                   {new Date(log.timestamp).toLocaleString('pt-BR')}
@@ -91,10 +132,10 @@ export default function LogsTable() {
                 <td className="px-4 py-2">{log.codigoRetirada ?? '-'}</td>
               </tr>
             ))}
-            {logs.length === 0 && (
+            {filtered.length === 0 && (
               <tr>
                 <td colSpan={COLUMNS.length} className="px-4 py-6 text-center text-ink-dim">
-                  Nenhuma partida registrada ainda.
+                  {logs.length === 0 ? 'Nenhuma partida registrada ainda.' : 'Nenhum resultado para a busca.'}
                 </td>
               </tr>
             )}

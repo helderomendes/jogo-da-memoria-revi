@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Grid3x3, Target, Timer } from 'lucide-react'
 import { useKiosk } from '../context/KioskContext'
-import { buildBoard, determinePrize, generatePickupCode } from '../utils/gameEngine'
-import { getGameConfig, getPrizeTiers, appendGameLog } from '../utils/dataStore'
+import { buildBoard, generatePickupCode } from '../utils/gameEngine'
+import { getGameConfig, appendGameLog, awardPrize } from '../utils/dataStore'
 import Board from '../components/Board'
 import Logo from '../components/Logo'
 import BackgroundGlow from '../components/BackgroundGlow'
@@ -14,7 +14,6 @@ const STEP_DELAY_MS = 700
 export default function GameScreen() {
   const { session, finishGame } = useKiosk()
   const [config, setConfig] = useState(null)
-  const [prizeTiers, setPrizeTiers] = useState(null)
 
   const [board, setBoard] = useState([])
   const [phase, setPhase] = useState('countdown') // 'countdown' | 'memorize' | 'playing' | 'locked'
@@ -30,9 +29,8 @@ export default function GameScreen() {
   const totalPairs = session.pairs.length
 
   useEffect(() => {
-    Promise.all([getGameConfig(), getPrizeTiers()]).then(([cfg, tiers]) => {
+    getGameConfig().then((cfg) => {
       setConfig(cfg)
-      setPrizeTiers(tiers)
       setChancesLeft(cfg.totalChances)
       setBoard(buildBoard(session.pairs))
     })
@@ -87,8 +85,12 @@ export default function GameScreen() {
     if (gameOverRef.current) return
     gameOverRef.current = true
 
-    const isWin = correctPairs > 0
-    const tier = isWin ? determinePrize(correctPairs, prizeTiers) : null
+    const madePairs = correctPairs > 0
+    // awardPrize escolhe a faixa e dá baixa no estoque atomicamente no banco.
+    const tier = madePairs ? await awardPrize(correctPairs) : null
+    // Venceu de fato só quando há um brinde disponível pra entregar. Se fez
+    // pares mas tudo está esgotado, tratamos como "sem prêmio".
+    const isWin = !!tier
     const pickupCode = isWin ? generatePickupCode() : null
 
     await appendGameLog({
@@ -99,7 +101,7 @@ export default function GameScreen() {
       pairsSorteados: session.pairs.map((p) => p.id),
       chancesUsadas: config.totalChances,
       paresCertos: correctPairs,
-      premioGanho: tier?.label ?? 'Nenhum (0 pares)',
+      premioGanho: tier?.label ?? (madePairs ? 'Sem estoque' : 'Nenhum (0 pares)'),
       codigoRetirada: pickupCode,
     })
 
@@ -149,7 +151,7 @@ export default function GameScreen() {
     }, COMPARE_DELAY_MS)
   }
 
-  if (!config || !prizeTiers || board.length === 0) {
+  if (!config || board.length === 0) {
     return (
       <div className="flex h-full w-full items-center justify-center bg-revi-gradient text-white text-2xl">
         Carregando...

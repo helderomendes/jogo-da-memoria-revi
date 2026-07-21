@@ -20,15 +20,32 @@ export function selectPairsForNewGame(allPairs, recentPairHistory, pairsPerGame)
 
 // Monta o tabuleiro: 2 cartas por par, posições embaralhadas.
 export function buildBoard(pairs) {
-  const cards = pairs.flatMap((pair) => [
-    { uid: `${pair.id}-a`, pairId: pair.id, text: pair.text, image: pair.image },
-    { uid: `${pair.id}-b`, pairId: pair.id, text: pair.text, image: pair.image },
-  ])
+  const cards = pairs.flatMap((pair) => {
+    const face = { pairId: pair.id, text: pair.text, image: pair.image, mode: pair.mode }
+    return [
+      { uid: `${pair.id}-a`, ...face },
+      { uid: `${pair.id}-b`, ...face },
+    ]
+  })
   return shuffle(cards)
 }
 
-// Faixa de prêmio pela quantidade EXATA de pares certos (0 a totalChances).
-// 0 pares certos não tem faixa — é derrota, sem prêmio.
+// Faixa de prêmio conquistada, considerando estoque e faixas habilitadas.
+// Regra: entre as faixas habilitadas, com regra de pares definida, alcançáveis
+// (pairs <= paresCertos) e com estoque disponível, entrega a de maior `pairs`.
+// Na prática isso premia a faixa EXATA quando ela tem estoque; se ela estiver
+// esgotada/desabilitada, faz downgrade automático para a melhor faixa abaixo
+// que ainda tenha brinde. Retorna null quando não há nenhuma faixa disponível
+// (0 pares certos, ou tudo esgotado).
 export function determinePrize(correctPairs, prizeTiers) {
-  return prizeTiers.find((tier) => tier.pairs === correctPairs) ?? null
+  const available = prizeTiers.filter(
+    (tier) =>
+      tier.enabled !== false &&
+      typeof tier.pairs === 'number' &&
+      tier.pairs > 0 &&
+      tier.pairs <= correctPairs &&
+      (tier.stock === null || tier.stock === undefined || tier.stock > 0),
+  )
+  if (available.length === 0) return null
+  return available.reduce((best, tier) => (tier.pairs > best.pairs ? tier : best))
 }

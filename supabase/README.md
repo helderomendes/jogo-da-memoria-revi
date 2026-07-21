@@ -1,0 +1,56 @@
+# Backend Supabase — Jogo da Memória Revi
+
+O totem e o painel admin agora leem/gravam no Supabase. O totem roda sem login
+(chave anônima) e só consegue ler cartas/config/brindes e gravar partidas. O
+painel `/admin` exige login e gerencia tudo (cartas, brindes, estoque, leads).
+
+## Setup (uma vez)
+
+### 1. Rodar as migrations
+
+No painel do Supabase do projeto **jogo-da-memoria** → **SQL Editor** → New query,
+cole e rode, nesta ordem:
+
+1. `supabase/migrations/0001_init.sql`  — tabelas, RLS, função de estoque, bucket
+2. `supabase/migrations/0002_seed.sql`  — dados iniciais (25 cartas, 4 brindes, config)
+
+### 2. Configurar as chaves no app
+
+Copie `.env.example` para `.env` e preencha:
+
+```
+VITE_SUPABASE_URL=https://vxgflmlyrajoadokjyqj.supabase.co
+VITE_SUPABASE_ANON_KEY=<anon key do projeto>
+```
+
+A `anon key` está em **Project Settings → API → Project API keys → `anon` / `public`**.
+Reinicie o `npm run dev` depois de mexer no `.env`.
+
+### 3. Criar o usuário admin
+
+No painel Supabase → **Authentication → Users → Add user** → informe email e senha.
+Esse é o login que você usará em `/admin`.
+
+> Dica: em **Authentication → Providers → Email**, deixe "Confirm email" desligado
+> se quiser que o usuário criado já entre direto, sem confirmação por email.
+
+## Como a segurança funciona (RLS)
+
+| Tabela        | Totem (anônimo)      | Admin (logado)        |
+|---------------|----------------------|-----------------------|
+| `cards`       | ler                  | ler + editar          |
+| `prize_tiers` | ler                  | ler + editar          |
+| `game_config` | ler                  | ler + editar          |
+| `game_logs`   | **só inserir**       | ler + apagar          |
+
+A lista de leads (`game_logs`) **não pode ser lida** por quem não está logado.
+
+A baixa de estoque acontece na função `award_prize(correct_pairs)` — uma
+transação atômica com lock de linha, para não entregar o mesmo último brinde
+duas vezes quando houver mais de um totem.
+
+## Deploy
+
+Ao publicar (Vercel/Netlify), defina as mesmas variáveis `VITE_SUPABASE_URL` e
+`VITE_SUPABASE_ANON_KEY` no ambiente do projeto. O `/admin` fica acessível pela
+web e você entra com o usuário criado no passo 3.

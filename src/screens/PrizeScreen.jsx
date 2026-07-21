@@ -1,21 +1,21 @@
-import { Candy, CreditCard, CupSoda, ShoppingBag } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { useKiosk } from '../context/KioskContext'
+import { getPrizeTiers } from '../utils/dataStore'
+import { resolvePrizeIcon } from '../data/prizeIcons'
 import Button from '../components/Button'
 import KioskScreen from '../components/KioskScreen'
 import GlassPanel from '../components/GlassPanel'
 import IconBadge from '../components/IconBadge'
 
-const PRIZE_ICONS = {
-  chocolate: Candy,
-  sacola: ShoppingBag,
-  giftcard: CreditCard,
-  bottle: CupSoda,
-}
-
 export default function PrizeScreen() {
   const { session, goToThanks } = useKiosk()
   const { prizeTier, pickupCode } = session
-  const WonIcon = PRIZE_ICONS[prizeTier?.id] ?? Candy
+  const [tiers, setTiers] = useState([])
+  const WonIcon = resolvePrizeIcon(prizeTier?.icon)
+
+  useEffect(() => {
+    getPrizeTiers().then((all) => setTiers(all.filter((t) => t.enabled !== false)))
+  }, [])
 
   return (
     <KioskScreen>
@@ -25,12 +25,12 @@ export default function PrizeScreen() {
 
       {/* Fileira de prêmios — o conquistado aparece maior, elevado e com glow */}
       <div className="flex items-end justify-center gap-3">
-        {Object.entries(PRIZE_ICONS).map(([id, Icon]) => {
-          const isWon = id === prizeTier?.id
+        {tiers.map((tier) => {
+          const isWon = tier.id === prizeTier?.id
           return (
             <IconBadge
-              key={id}
-              icon={Icon}
+              key={tier.id}
+              icon={resolvePrizeIcon(tier.icon)}
               tone={isWon ? 'lime' : 'neutral'}
               size={isWon ? 72 : 48}
               className={isWon ? '-translate-y-2 animate-[pop_0.5s_ease-out_backwards]' : 'opacity-40'}
