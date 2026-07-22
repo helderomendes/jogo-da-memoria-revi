@@ -13,6 +13,20 @@ const LOCAL_KEYS = {
   pairHistory: 'pairHistory',
 }
 
+// Tag de origem: todo lead do totem é marcado com ela. Sempre normalizamos para
+// que 'jogo-da-memoria' fique como a ÚLTIMA tag, independente do que o admin
+// adicionar manualmente.
+export const SOURCE_TAG = 'jogo-da-memoria'
+
+export function normalizeTags(tags) {
+  const list = (Array.isArray(tags) ? tags : String(tags ?? '').split(','))
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .filter((t) => t.toLowerCase() !== SOURCE_TAG)
+  list.push(SOURCE_TAG)
+  return list
+}
+
 // --- Mapeamentos linha do banco (snake_case) <-> objeto do app (camelCase) ---
 function rowToCard(row) {
   return {
@@ -173,16 +187,9 @@ export async function pushPairHistory(pairIds, keepLastGames) {
 }
 
 // --- Logs de partida / leads ---
-export async function getGameLogs() {
-  const { data, error } = await supabase
-    .from('game_logs')
-    .select('*')
-    .order('created_at', { ascending: true })
-  if (error) {
-    console.error('[getGameLogs]', error.message)
-    return []
-  }
-  return (data ?? []).map((row) => ({
+function rowToLog(row) {
+  return {
+    id: row.id,
     timestamp: row.created_at,
     name: row.name,
     phone: row.phone,
@@ -192,22 +199,76 @@ export async function getGameLogs() {
     paresCertos: row.pares_certos,
     premioGanho: row.premio_ganho,
     codigoRetirada: row.codigo_retirada,
-  }))
+    tags: row.tags?.length ? row.tags : [SOURCE_TAG],
+  }
 }
 
+// Monta o payload snake_case pro banco. `partial` = só inclui os campos
+// presentes (usado no update); tags sempre normalizadas com a origem no final.
+function logToRow(log, { partial = false } = {}) {
+  const row = {}
+  const set = (key, has, value) => {
+    if (!partial || has) row[key] = value
+  }
+  set('created_at', 'timestamp' in log, log.timestamp ?? new Date().toISOString())
+  set('name', 'name' in log, log.name ?? null)
+  set('phone', 'phone' in log, log.phone || null)
+  set('company', 'company' in log, log.company || null)
+  set('pairs_sorteados', 'pairsSorteados' in log, log.pairsSorteados ?? [])
+  set('chances_usadas', 'chancesUsadas' in log, log.chancesUsadas ?? null)
+  set('pares_certos', 'paresCertos' in log, log.paresCertos ?? null)
+  set('premio_ganho', 'premioGanho' in log, log.premioGanho || null)
+  set('codigo_retirada', 'codigoRetirada' in log, log.codigoRetirada || null)
+  set('tags', 'tags' in log, normalizeTags(log.tags))
+  return row
+}
+
+export async function getGameLogs() {
+  const { data, error } = await supabase
+    .from('game_logs')
+    .select('*')
+    .order('created_at', { ascending: true })
+  if (error) {
+    console.error('[getGameLogs]', error.message)
+    return []
+  }
+  return (data ?? []).map(rowToLog)
+}
+
+// Registro automático pelo totem no fim da partida.
 export async function appendGameLog(log) {
-  const { error } = await supabase.from('game_logs').insert({
-    name: log.name,
-    phone: log.phone ?? null,
-    company: log.company ?? null,
-    pairs_sorteados: log.pairsSorteados ?? [],
-    chances_usadas: log.chancesUsadas,
-    pares_certos: log.paresCertos,
-    premio_ganho: log.premioGanho,
-    codigo_retirada: log.codigoRetirada ?? null,
-  })
+  const { error } = await supabase.from('game_logs').insert(logToRow(log))
   if (error) console.error('[appendGameLog]', error.message)
   return log
+}
+
+// Inserção manual pelo admin. Retorna o lead criado (com id).
+export async function addGameLog(log) {
+  const { data, error } = await supabase
+    .from('game_logs')
+    .insert(logToRow(log))
+    .select()
+    .single()
+  if (error) throw error
+  return rowToLog(data)
+}
+
+// Edição manual pelo admin. `fields` = só os campos alterados.
+export async function updateGameLog(id, fields) {
+  const { data, error } = await supabase
+    .from('game_logs')
+    .update(logToRow(fields, { partial: true }))
+    .eq('id', id)
+    .select()
+    .single()
+  if (error) throw error
+  return rowToLog(data)
+}
+
+// Exclusão de um lead específico.
+export async function deleteGameLog(id) {
+  const { error } = await supabase.from('game_logs').delete().eq('id', id)
+  if (error) throw error
 }
 
 export async function clearGameLogs() {
