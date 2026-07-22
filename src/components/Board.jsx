@@ -10,17 +10,23 @@ export default function Board({
   cols,
   rows,
 }) {
+  // Proporção total do tabuleiro para cada célula ficar 4:5 (capinhas).
+  const boardRatio = (cols * 4) / (rows * 5)
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-hidden">
+    <div
+      className="flex h-full w-full items-center justify-center overflow-hidden"
+      style={{ containerType: 'size' }}
+    >
       <div
-        className="grid w-full gap-2 sm:gap-3"
+        className="grid gap-2 sm:gap-3"
         style={{
           gridTemplateColumns: `repeat(${cols}, 1fr)`,
           gridTemplateRows: `repeat(${rows}, 1fr)`,
-          // Cada célula fica travada em 4:5 (mesma proporção das capinhas):
-          // a proporção total do tabuleiro é (cols*4) / (rows*5).
           aspectRatio: `${cols * 4} / ${rows * 5}`,
-          maxHeight: '100%',
+          // Maior tabuleiro que cabe respeitando largura E altura (contain):
+          // limita a largura à menor entre a largura do container e a largura
+          // que a altura permite (100cqh * proporção). A altura vem do aspect.
+          width: `min(100cqw, ${(boardRatio * 100).toFixed(3)}cqh)`,
         }}
       >
         {cards.map((card, i) => (
