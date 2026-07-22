@@ -16,7 +16,10 @@ export default function Board({
         className="grid w-full gap-2 sm:gap-3"
         style={{
           gridTemplateColumns: `repeat(${cols}, 1fr)`,
-          aspectRatio: `${cols} / ${rows}`,
+          gridTemplateRows: `repeat(${rows}, 1fr)`,
+          // Cada célula fica travada em 4:5 (mesma proporção das capinhas):
+          // a proporção total do tabuleiro é (cols*4) / (rows*5).
+          aspectRatio: `${cols * 4} / ${rows * 5}`,
           maxHeight: '100%',
         }}
       >

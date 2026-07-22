@@ -59,7 +59,7 @@ function WheelCard({ card, tint, index }) {
       >
         <div
           style={{ backgroundImage: tint }}
-          className="relative flex w-[clamp(120px,15vw,210px)] flex-col items-center justify-between overflow-hidden rounded-[clamp(14px,1.8vw,24px)] border border-white/12 p-[clamp(8px,1.2vw,16px)] text-center shadow-card backdrop-blur-md aspect-[3/4]"
+          className="relative flex w-[clamp(120px,15vw,210px)] flex-col items-center justify-between overflow-hidden rounded-[clamp(14px,1.8vw,24px)] border border-white/12 p-[clamp(8px,1.2vw,16px)] text-center shadow-card backdrop-blur-md aspect-[4/5]"
         >
           {/* brilho superior (glassmorfismo) */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/18 to-transparent" />
