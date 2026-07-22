@@ -165,7 +165,7 @@ export default function IdleScreen() {
 
         <div className="flex flex-1 flex-col items-center justify-center gap-[clamp(0.8rem,2.4vh,1.8rem)]">
           <span className="flex items-center gap-2 rounded-full border border-lime-400/30 bg-lime-400/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-lime-300 backdrop-blur-sm">
-            <Sparkles size={13} /> Revi apresenta
+            <Sparkles size={13} /> apresenta
           </span>
 
           <h1 className="text-[clamp(2.6rem,7.5vw,5.5rem)] font-extrabold uppercase leading-[0.92] tracking-tight">
