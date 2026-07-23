@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Gift, Grid3x3, Sparkles, Timer } from 'lucide-react'
 import { useKiosk } from '../context/KioskContext'
 import { DEFAULT_CARDS } from '../data/cards'
+import { getCards } from '../utils/dataStore'
 import Logo from '../components/Logo'
 import Chip from '../components/Chip'
 import faviconUrl from '../assets/favicon.svg'
@@ -48,6 +50,7 @@ const CARD_TINTS = [
 function WheelCard({ card, tint, index }) {
   const slot = index * (360 / DECK_SIZE)
   const depthDelay = `-${((index / DECK_SIZE) * SPIN_SECONDS).toFixed(2)}s`
+  const hasImage = card.mode === 'image' && card.image
   return (
     <div
       className="absolute left-1/2 top-1/2"
@@ -58,15 +61,21 @@ function WheelCard({ card, tint, index }) {
         style={{ animationDuration: `${SPIN_SECONDS}s`, animationDelay: depthDelay }}
       >
         <div
-          style={{ backgroundImage: tint }}
-          className="relative flex w-[clamp(120px,15vw,210px)] flex-col items-center justify-between overflow-hidden rounded-[clamp(14px,1.8vw,24px)] border border-white/12 p-[clamp(8px,1.2vw,16px)] text-center shadow-card backdrop-blur-md aspect-[4/5]"
+          style={hasImage ? undefined : { backgroundImage: tint }}
+          className="relative flex w-[clamp(120px,15vw,210px)] flex-col items-center justify-between overflow-hidden rounded-[clamp(14px,1.8vw,24px)] border border-white/12 text-center shadow-card backdrop-blur-md aspect-[4/5]"
         >
-          {/* brilho superior (glassmorfismo) */}
+          {hasImage ? (
+            <img src={card.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full flex-col items-center justify-between p-[clamp(8px,1.2vw,16px)]">
+              <img src={faviconUrl} alt="" className="relative w-[26%] opacity-75" />
+              <p className="relative font-semibold leading-tight text-[clamp(0.62rem,1.7vw,1.05rem)] text-ink-100">
+                {card.text}
+              </p>
+            </div>
+          )}
+          {/* brilho superior (glassmorfismo) — por cima da capa também */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/18 to-transparent" />
-          <img src={faviconUrl} alt="" className="relative w-[26%] opacity-75" />
-          <p className="relative font-semibold leading-tight text-[clamp(0.62rem,1.7vw,1.05rem)] text-ink-100">
-            {card.text}
-          </p>
         </div>
       </div>
     </div>
@@ -74,7 +83,7 @@ function WheelCard({ card, tint, index }) {
 }
 
 // Roda decorativa na faixa inferior (os ~40% que não recebem interação).
-function WheelDeck() {
+function WheelDeck({ deck }) {
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[52vh] overflow-hidden">
       {/* "holofote" atrás do topo — destaca a carta que passa no ponto mais alto */}
@@ -96,7 +105,7 @@ function WheelDeck() {
           <WheelCard
             key={i}
             index={i}
-            card={DEFAULT_CARDS[(i * 2) % DEFAULT_CARDS.length]}
+            card={deck[i % deck.length]}
             tint={CARD_TINTS[i % CARD_TINTS.length]}
           />
         ))}
@@ -107,6 +116,19 @@ function WheelDeck() {
 
 export default function IdleScreen() {
   const { startRegistration } = useKiosk()
+  const [cards, setCards] = useState(DEFAULT_CARDS)
+
+  useEffect(() => {
+    getCards().then((data) => {
+      if (data?.length) setCards(data)
+    })
+  }, [])
+
+  // Baralho da roda: prioriza cards com capa (pra as imagens aparecerem),
+  // depois completa com os demais. Cai no DEFAULT_CARDS enquanto carrega.
+  const withImage = cards.filter((c) => c.mode === 'image' && c.image)
+  const withoutImage = cards.filter((c) => !(c.mode === 'image' && c.image))
+  const deck = [...withImage, ...withoutImage]
 
   return (
     <button
@@ -157,7 +179,7 @@ export default function IdleScreen() {
       </div>
 
       {/* roda giratória na faixa inferior (atrás do conteúdo) */}
-      <WheelDeck />
+      <WheelDeck deck={deck} />
 
       {/* --- Conteúdo: concentrado nos ~58% superiores --- */}
       <div className="relative z-10 flex h-[58vh] min-h-[480px] w-full flex-col items-center px-6 pt-[4vh]">
