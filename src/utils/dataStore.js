@@ -44,6 +44,7 @@ function rowToTier(row) {
     label: row.label ?? '',
     description: row.description ?? '',
     icon: row.icon ?? DEFAULT_PRIZE_ICON,
+    image: row.image ?? null,
     enabled: row.enabled !== false,
     stockInitial: row.stock_initial ?? null,
     stock: row.stock ?? null,
@@ -92,6 +93,19 @@ export async function uploadCardImage(file) {
   return data.publicUrl
 }
 
+// Sobe a foto de um brinde pro Storage e devolve a URL pública.
+export async function uploadPrizeImage(file) {
+  const ext = file.name.split('.').pop() || 'png'
+  const path = `${crypto.randomUUID()}.${ext}`
+  const { error } = await supabase.storage.from('prize-images').upload(path, file, {
+    cacheControl: '3600',
+    upsert: false,
+  })
+  if (error) throw error
+  const { data } = supabase.storage.from('prize-images').getPublicUrl(path)
+  return data.publicUrl
+}
+
 // --- Faixas de prêmio ---
 export async function getPrizeTiers() {
   const { data, error } = await supabase.from('prize_tiers').select('*').order('sort_order')
@@ -109,6 +123,7 @@ export async function savePrizeTiers(tiers) {
     label: t.label ?? '',
     description: t.description ?? '',
     icon: t.icon ?? DEFAULT_PRIZE_ICON,
+    image: t.image ?? null,
     enabled: t.enabled !== false,
     stock_initial: t.stockInitial ?? null,
     stock: t.stock ?? null,
@@ -145,6 +160,7 @@ export async function resetPrizeStock() {
     label: t.label ?? '',
     description: t.description ?? '',
     icon: t.icon ?? DEFAULT_PRIZE_ICON,
+    image: t.image ?? null,
     enabled: t.enabled !== false,
     stock_initial: t.stockInitial ?? null,
     stock: t.stockInitial ?? null,

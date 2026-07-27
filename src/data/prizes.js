@@ -9,6 +9,7 @@
 //                  `null` = estoque ilimitado (nunca esgota).
 //   enabled      = se false, a faixa é ignorada na premiação (reserva/desativada).
 //   icon         = nome do ícone (ver src/data/prizeIcons.js).
+//   image        = URL da foto do brinde (crop circular). null = usa o ícone.
 export const DEFAULT_PRIZE_TIERS = [
   {
     id: 'chocolate',
@@ -16,6 +17,7 @@ export const DEFAULT_PRIZE_TIERS = [
     label: 'Chocolate GoldKo',
     description: '1 par certo. Um docinho pra comemorar.',
     icon: 'candy',
+    image: null,
     enabled: true,
     stockInitial: 100,
     stock: 100,
@@ -26,6 +28,7 @@ export const DEFAULT_PRIZE_TIERS = [
     label: 'Sacola Revi',
     description: '2 pares certos. Leve a sacola pra casa.',
     icon: 'bag',
+    image: null,
     enabled: true,
     stockInitial: 50,
     stock: 50,
@@ -36,6 +39,7 @@ export const DEFAULT_PRIZE_TIERS = [
     label: 'Gift Card',
     description: '3 de 3 pares certos — resultado máximo!',
     icon: 'card',
+    image: null,
     enabled: true,
     stockInitial: 20,
     stock: 20,
@@ -46,6 +50,7 @@ export const DEFAULT_PRIZE_TIERS = [
     label: 'Squeeze Revi',
     description: 'Prêmio reserva — ainda sem regra de liberação definida.',
     icon: 'bottle',
+    image: null,
     enabled: false,
     stockInitial: 30,
     stock: 30,

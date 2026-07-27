@@ -13,6 +13,8 @@ cole e rode, nesta ordem:
 
 1. `supabase/migrations/0001_init.sql`  — tabelas, RLS, função de estoque, bucket
 2. `supabase/migrations/0002_seed.sql`  — dados iniciais (25 cartas, 4 brindes, config)
+3. `supabase/migrations/0003_leads_tags_edit.sql` — tags/edição de leads
+4. `supabase/migrations/0004_prize_images.sql` — foto dos brindes (coluna `image` + bucket `prize-images`)
 
 ### 2. Configurar as chaves no app
 
