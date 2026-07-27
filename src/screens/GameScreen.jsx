@@ -37,7 +37,7 @@ export default function GameScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const readySteps = config ? ['PENSE', ...Array.from({ length: config.getReadySeconds }, (_, i) => config.getReadySeconds - i)] : []
+  const readySteps = config ? ['MEMORIZE', ...Array.from({ length: config.getReadySeconds }, (_, i) => config.getReadySeconds - i)] : []
 
   // "PENSE, 3, 2, 1" — depois entra na memorização.
   useEffect(() => {
