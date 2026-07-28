@@ -10,7 +10,8 @@ export const DEFAULT_GAME_CONFIG = {
   memorizeSeconds: 3,
   // Chances totais do jogo (não por rodada). Cada jogada — vire 2 cartas,
   // acerte ou erre — consome 1 chance. Zerou as chances, acabou o jogo.
-  totalChances: 3,
+  // 6 chances = até 6 acertos, cobrindo todas as faixas de brinde (1 a 6).
+  totalChances: 6,
   // Cronômetro da fase de jogo: corre em paralelo com as chances. Zerou o
   // tempo OU as chances (o que vier primeiro), o jogo termina.
   guessSeconds: 40,
