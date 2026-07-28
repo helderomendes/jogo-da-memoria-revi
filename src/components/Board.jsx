@@ -1,5 +1,11 @@
 import Card from './Card'
 
+// Proporção de cada célula (largura:altura). Cartas levemente "em pé" (5:8)
+// deixam o tabuleiro 4x4 mais alto — assim ele preenche a altura de um totem
+// retrato 9:16 em vez de sobrar faixa vazia em cima e embaixo.
+const CARD_W = 5
+const CARD_H = 8
+
 export default function Board({
   cards,
   flippedUids,
@@ -10,8 +16,7 @@ export default function Board({
   cols,
   rows,
 }) {
-  // Proporção total do tabuleiro para cada célula ficar 4:5 (capinhas).
-  const boardRatio = (cols * 4) / (rows * 5)
+  const boardRatio = (cols * CARD_W) / (rows * CARD_H)
   return (
     <div
       className="flex h-full w-full items-center justify-center overflow-hidden"
@@ -22,7 +27,7 @@ export default function Board({
         style={{
           gridTemplateColumns: `repeat(${cols}, 1fr)`,
           gridTemplateRows: `repeat(${rows}, 1fr)`,
-          aspectRatio: `${cols * 4} / ${rows * 5}`,
+          aspectRatio: `${cols * CARD_W} / ${rows * CARD_H}`,
           // Maior tabuleiro que cabe respeitando largura E altura (contain):
           // limita a largura à menor entre a largura do container e a largura
           // que a altura permite (100cqh * proporção). A altura vem do aspect.
