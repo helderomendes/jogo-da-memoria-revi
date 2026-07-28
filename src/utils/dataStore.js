@@ -8,9 +8,54 @@ import { DEFAULT_CARDS } from '../data/cards'
 import { DEFAULT_PRIZE_TIERS } from '../data/prizes'
 import { DEFAULT_GAME_CONFIG } from '../data/config'
 import { DEFAULT_PRIZE_ICON } from '../data/prizeIcons'
+import { determinePrize } from './gameEngine'
 
 const LOCAL_KEYS = {
   pairHistory: 'pairHistory',
+}
+
+// --- Camada offline-first --------------------------------------------------
+// Leituras (cartas/config/brindes) são "rede primeiro, cache depois": quando há
+// internet, busca no Supabase e guarda uma cópia local; sem internet, devolve a
+// última cópia salva (ou os defaults). Escritas (partida + premiação) entram
+// numa fila local quando offline e sobem quando a conexão volta (syncPending).
+const CACHE_KEYS = {
+  cards: 'cache:cards',
+  config: 'cache:config',
+  tiers: 'cache:tiers',
+}
+const QUEUE_KEYS = {
+  logs: 'queue:logs', // linhas game_logs aguardando insert
+  awards: 'queue:awards', // brindes premiados offline aguardando baixa de estoque
+}
+
+const isOnline = () => (typeof navigator === 'undefined' ? true : navigator.onLine)
+
+// Rede primeiro com fallback no cache local. `remoteFn` deve LANÇAR em erro
+// (assim caímos no cache); em sucesso, atualiza o cache e retorna o dado.
+async function readWithCache(cacheKey, remoteFn, fallback) {
+  if (isOnline()) {
+    try {
+      const data = await remoteFn()
+      writeJSON(cacheKey, data)
+      return data
+    } catch (e) {
+      console.warn(`[offline] usando cache de ${cacheKey}:`, e?.message ?? e)
+    }
+  }
+  const cached = readJSON(cacheKey, null)
+  return cached != null ? cached : fallback
+}
+
+function enqueue(key, item) {
+  const list = readJSON(key, [])
+  list.push(item)
+  writeJSON(key, list)
+}
+
+// Quantidade de escritas pendentes (partidas + baixas de estoque) aguardando sync.
+export function getPendingCount() {
+  return readJSON(QUEUE_KEYS.logs, []).length + readJSON(QUEUE_KEYS.awards, []).length
 }
 
 // Tag de origem: todo lead do totem é marcado com ela. Sempre normalizamos para
@@ -52,13 +97,18 @@ function rowToTier(row) {
 }
 
 // --- Cartas ---
-export async function getCards() {
+async function fetchCardsRemote() {
   const { data, error } = await supabase.from('cards').select('*').order('sort_order')
-  if (error) {
-    console.error('[getCards]', error.message)
-    return DEFAULT_CARDS.map((c) => ({ ...c, mode: c.image ? 'image' : 'text' }))
-  }
+  if (error) throw error
   return (data ?? []).map(rowToCard)
+}
+
+export async function getCards() {
+  return readWithCache(
+    CACHE_KEYS.cards,
+    fetchCardsRemote,
+    DEFAULT_CARDS.map((c) => ({ ...c, mode: c.image ? 'image' : 'text' })),
+  )
 }
 
 export async function saveCards(cards) {
@@ -107,13 +157,14 @@ export async function uploadPrizeImage(file) {
 }
 
 // --- Faixas de prêmio ---
-export async function getPrizeTiers() {
+async function fetchPrizeTiersRemote() {
   const { data, error } = await supabase.from('prize_tiers').select('*').order('sort_order')
-  if (error) {
-    console.error('[getPrizeTiers]', error.message)
-    return DEFAULT_PRIZE_TIERS
-  }
+  if (error) throw error
   return (data ?? []).map(rowToTier)
+}
+
+export async function getPrizeTiers() {
+  return readWithCache(CACHE_KEYS.tiers, fetchPrizeTiersRemote, DEFAULT_PRIZE_TIERS)
 }
 
 export async function savePrizeTiers(tiers) {
@@ -139,16 +190,49 @@ export async function savePrizeTiers(tiers) {
   return tiers
 }
 
-// Premiação atômica: o banco escolhe a melhor faixa com estoque e dá baixa numa
-// só transação (seguro pra múltiplos totens). Retorna o tier ganho ou null.
+// Premiação. ONLINE: o banco escolhe a melhor faixa com estoque e dá baixa numa
+// só transação (seguro pra múltiplos totens). OFFLINE (ou se a chamada falhar):
+// decide localmente pelo snapshot de brindes em cache, dá baixa no estoque local
+// e enfileira a baixa pra reconciliar no servidor quando a internet voltar.
+// Retorna o tier ganho ou null.
 export async function awardPrize(correctPairs) {
-  const { data, error } = await supabase.rpc('award_prize', { correct_pairs: correctPairs })
-  if (error) {
-    console.error('[awardPrize]', error.message)
-    return null
+  if (isOnline()) {
+    const { data, error } = await supabase.rpc('award_prize', { correct_pairs: correctPairs })
+    if (!error) {
+      if (!data || data.length === 0) return null
+      const tier = rowToTier(data[0])
+      // Mantém o snapshot local coerente com o servidor pra um eventual offline.
+      syncTierStockCache(tier)
+      return tier
+    }
+    console.warn('[awardPrize] falhou online, indo pro modo offline:', error.message)
   }
-  if (!data || data.length === 0) return null
-  return rowToTier(data[0])
+  return awardPrizeOffline(correctPairs)
+}
+
+// Premiação 100% local: usa o cache de brindes, aplica a mesma regra de faixa/
+// estoque do servidor (determinePrize) e registra a baixa na fila de sync.
+function awardPrizeOffline(correctPairs) {
+  const tiers = readJSON(CACHE_KEYS.tiers, null) ?? DEFAULT_PRIZE_TIERS
+  const chosen = determinePrize(correctPairs, tiers)
+  if (!chosen) return null
+
+  const updated = tiers.map((t) =>
+    t.id === chosen.id && typeof t.stock === 'number' ? { ...t, stock: Math.max(0, t.stock - 1) } : t,
+  )
+  writeJSON(CACHE_KEYS.tiers, updated)
+  enqueue(QUEUE_KEYS.awards, { tierId: chosen.id, at: new Date().toISOString() })
+  return chosen
+}
+
+// Reflete no cache local a baixa que o servidor acabou de fazer (premiação online).
+function syncTierStockCache(tier) {
+  const tiers = readJSON(CACHE_KEYS.tiers, null)
+  if (!tiers) return
+  writeJSON(
+    CACHE_KEYS.tiers,
+    tiers.map((t) => (t.id === tier.id ? { ...t, stock: tier.stock } : t)),
+  )
 }
 
 // Restaura o estoque atual de cada tier ao valor inicial cadastrado (uso admin).
@@ -173,13 +257,14 @@ export async function resetPrizeStock() {
 }
 
 // --- Configuração do jogo ---
-export async function getGameConfig() {
+async function fetchGameConfigRemote() {
   const { data, error } = await supabase.from('game_config').select('data').eq('id', 1).maybeSingle()
-  if (error) {
-    console.error('[getGameConfig]', error.message)
-    return { ...DEFAULT_GAME_CONFIG }
-  }
+  if (error) throw error
   return { ...DEFAULT_GAME_CONFIG, ...(data?.data ?? {}) }
+}
+
+export async function getGameConfig() {
+  return readWithCache(CACHE_KEYS.config, fetchGameConfigRemote, { ...DEFAULT_GAME_CONFIG })
 }
 
 export async function saveGameConfig(config) {
@@ -251,11 +336,55 @@ export async function getGameLogs() {
   return (data ?? []).map(rowToLog)
 }
 
-// Registro automático pelo totem no fim da partida.
+// Registro automático pelo totem no fim da partida. Offline (ou em erro), a
+// linha vai pra fila local e sobe no próximo sync.
 export async function appendGameLog(log) {
-  const { error } = await supabase.from('game_logs').insert(logToRow(log))
-  if (error) console.error('[appendGameLog]', error.message)
+  const row = logToRow(log)
+  if (isOnline()) {
+    const { error } = await supabase.from('game_logs').insert(row)
+    if (!error) return log
+    console.warn('[appendGameLog] falhou online, enfileirando:', error.message)
+  }
+  enqueue(QUEUE_KEYS.logs, row)
   return log
+}
+
+// Sobe tudo que ficou pendente enquanto o totem esteve offline: primeiro as
+// partidas (insert em game_logs), depois as baixas de estoque dos brindes
+// premiados offline. Cada item só sai da fila quando confirma no servidor.
+// Retorna quantos itens ainda restam pendentes.
+export async function syncPending() {
+  if (!isOnline()) return getPendingCount()
+
+  // 1) Partidas pendentes — uma a uma, pra não perder o lote inteiro num erro.
+  const logs = readJSON(QUEUE_KEYS.logs, [])
+  if (logs.length) {
+    const remaining = []
+    for (const row of logs) {
+      const { error } = await supabase.from('game_logs').insert(row)
+      if (error) remaining.push(row)
+    }
+    writeJSON(QUEUE_KEYS.logs, remaining)
+  }
+
+  // 2) Baixas de estoque dos brindes premiados offline.
+  const awards = readJSON(QUEUE_KEYS.awards, [])
+  if (awards.length) {
+    const remaining = []
+    for (const a of awards) {
+      const { error } = await supabase.rpc('decrement_prize_stock', { p_id: a.tierId, p_qty: 1 })
+      if (error) remaining.push(a)
+    }
+    writeJSON(QUEUE_KEYS.awards, remaining)
+    // Reatualiza o snapshot local de brindes com o estoque real do servidor.
+    try {
+      await fetchPrizeTiersRemote().then((t) => writeJSON(CACHE_KEYS.tiers, t))
+    } catch {
+      /* sem rede de novo: mantém o cache atual */
+    }
+  }
+
+  return getPendingCount()
 }
 
 // Inserção manual pelo admin. Retorna o lead criado (com id).

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { KioskProvider, SCREENS, useKiosk } from './context/KioskContext'
 import { getGameConfig } from './utils/dataStore'
 import { useIdleTimer } from './utils/useIdleTimer'
+import { useOfflineSync } from './utils/useOfflineSync'
+import OfflineBadge from './components/OfflineBadge'
 import IdleScreen from './screens/IdleScreen'
 import RegisterScreen from './screens/RegisterScreen'
 import InstructionsScreen from './screens/InstructionsScreen'
@@ -23,6 +25,7 @@ const SCREEN_COMPONENTS = {
 function KioskFlow() {
   const { screen, resetToIdle } = useKiosk()
   const [idleTimeoutMs, setIdleTimeoutMs] = useState(null)
+  const { online, pending } = useOfflineSync()
 
   useEffect(() => {
     getGameConfig().then((cfg) => setIdleTimeoutMs(cfg.idleTimeoutMs))
@@ -45,6 +48,7 @@ function KioskFlow() {
 
   return (
     <div className="fixed inset-0 overflow-y-auto bg-revi-gradient transition-opacity duration-300">
+      <OfflineBadge online={online} pending={pending} />
       <ScreenComponent />
     </div>
   )

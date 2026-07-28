@@ -15,6 +15,22 @@ cole e rode, nesta ordem:
 2. `supabase/migrations/0002_seed.sql`  — dados iniciais (25 cartas, 4 brindes, config)
 3. `supabase/migrations/0003_leads_tags_edit.sql` — tags/edição de leads
 4. `supabase/migrations/0004_prize_images.sql` — foto dos brindes (coluna `image` + bucket `prize-images`)
+5. `supabase/migrations/0005_decrement_stock.sql` — baixa de estoque avulsa (usada pela sync do modo offline)
+
+## Modo offline (PWA)
+
+O totem é uma PWA com Service Worker: o app abre 100% offline (app shell em
+precache) e as leituras (cartas, config, brindes) ficam em cache local. Sem
+internet, o jogo roda normal — as partidas e as baixas de estoque dos brindes
+premiados entram numa fila no navegador (`localStorage`) e sobem
+automaticamente quando a conexão volta:
+
+- Partidas → `insert` em `game_logs`.
+- Brinde premiado offline → baixa local no estoque + `decrement_prize_stock`
+  no servidor ao reconectar (por isso a migration `0005`).
+
+Ideal para **1 totem por evento** — o dispositivo é a fonte de verdade do
+estoque enquanto está offline.
 
 ### 2. Configurar as chaves no app
 
