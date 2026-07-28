@@ -90,6 +90,18 @@ export default function GameScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, guessCountdown])
 
+  // Fim por CHANCES ou por completar todos os pares. Fica num efeito dedicado
+  // (fonte única de verdade) — assim o encerramento não depende do estado
+  // capturado no closure do clique, que podia falhar em toques rápidos.
+  useEffect(() => {
+    if (phase !== 'playing' && phase !== 'locked') return
+    if (chancesLeft === null) return
+    if (chancesLeft <= 0 || matchedPairIds.length === totalPairs) {
+      finalizeGame(matchedPairIds.length)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chancesLeft, matchedPairIds, phase])
+
   const finalizeGame = async (correctPairs) => {
     if (gameOverRef.current) return
     gameOverRef.current = true
@@ -143,19 +155,13 @@ export default function GameScreen() {
       if (gameOverRef.current) return
 
       const newMatched = isMatch ? [...matchedPairIds, firstCard.pairId] : matchedPairIds
-      const newChancesLeft = chancesLeft - 1
 
       if (!isMatch) setWrongFlash(nextFlipped)
       setMatchedPairIds(newMatched)
-      setChancesLeft(newChancesLeft)
+      setChancesLeft((c) => c - 1) // updater funcional: nunca usa valor obsoleto
       setFlippedUids([])
-
-      const gameOver = newChancesLeft <= 0 || newMatched.length === totalPairs
-      if (gameOver) {
-        finalizeGame(newMatched.length)
-      } else {
-        setPhase('playing')
-      }
+      setPhase('playing')
+      // O fim de jogo (chances/pares) é decidido pelo efeito dedicado acima.
       setTimeout(() => setWrongFlash([]), 800)
     }, COMPARE_DELAY_MS)
   }

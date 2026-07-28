@@ -122,7 +122,7 @@ export default function RegisterScreen() {
             onChange={(e) => setTermsAccepted(e.target.checked)}
             className="mt-1 h-7 w-7 accent-lime-400 shrink-0"
           />
-          Li e aceito os termos de uso e a política de privacidade (LGPD) da Revi. *
+          Autorizo receber mensagens e compartilhar meu contato com a Revi. *
         </label>
       </GlassPanel>
 
