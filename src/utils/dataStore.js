@@ -90,18 +90,36 @@ export function getPendingCount() {
   return readJSON(QUEUE_KEYS.logs, []).length + readJSON(QUEUE_KEYS.awards, []).length
 }
 
-// Pré-baixa TODAS as imagens (capas dos cards + fotos dos brindes) pro cache do
-// Service Worker, mesmo as que ainda não apareceram na tela. Assim elas ficam
-// disponíveis offline e sobrevivem a reboots/reload — o cache do SW (CacheFirst)
-// é persistente e não some entre sessões nem entre deploys.
+// Carrega e DECODIFICA uma imagem: baixa os bytes (o SW guarda no cache) e já
+// deixa o bitmap decodificado, pra o primeiro render ser instantâneo — sem
+// "bugar"/aparecer vazio na primeira partida. Cai num fetch simples se o
+// decode não estiver disponível.
+function preloadImage(url) {
+  return new Promise((resolve) => {
+    try {
+      const img = new Image()
+      img.decoding = 'async'
+      img.onload = () => resolve(true)
+      img.onerror = () => fetch(url).then(() => resolve(true)).catch(() => resolve(false))
+      img.src = url
+      if (img.decode) img.decode().then(() => resolve(true)).catch(() => {})
+    } catch {
+      fetch(url).then(() => resolve(true)).catch(() => resolve(false))
+    }
+  })
+}
+
+// Pré-carrega TODAS as imagens (capas dos cards + fotos dos brindes), mesmo as
+// que ainda não apareceram na tela. Ficam no cache do SW (persistente entre
+// sessões, reboots e deploys) E decodificadas, então a primeira partida já
+// mostra tudo na hora.
 export async function prefetchAllMedia() {
   if (!isOnline()) return 0
   try {
     const [cards, tiers] = await Promise.all([getCards(), getPrizeTiers()])
     const urls = [...(cards ?? []), ...(tiers ?? [])].map((x) => x?.image).filter(Boolean)
     const unique = [...new Set(urls)]
-    // fetch normal → interceptado pelo SW (CacheFirst) e guardado no cache.
-    await Promise.allSettled(unique.map((u) => fetch(u).catch(() => {})))
+    await Promise.allSettled(unique.map(preloadImage))
     return unique.length
   } catch {
     return 0

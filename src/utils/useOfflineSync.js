@@ -8,18 +8,22 @@ import {
   prefetchAllMedia,
 } from './dataStore'
 
-// Pré-baixa as imagens só depois que o Service Worker controla a página — antes
-// disso o fetch não passaria pelo SW e não entraria no cache persistente.
+// Pré-carrega as imagens de forma robusta:
+//  1) dispara já no boot — decodifica + baixa, pra a PRIMEIRA partida não abrir
+//     com cards vazios, mesmo que o SW ainda não controle a página;
+//  2) repete quando o SW fica pronto, garantindo que tudo entre no cache
+//     persistente (sobrevive a reboots/deploys).
 async function prefetchMediaWhenSWReady() {
+  // Armazenamento persistente pra o cache não ser despejado pelo navegador.
+  if (navigator.storage?.persist) navigator.storage.persist().catch(() => {})
+  // (1) começa agora
+  prefetchAllMedia()
+  // (2) reforça quando o SW controla a página
   try {
     if ('serviceWorker' in navigator) {
       await navigator.serviceWorker.ready
-      // Em primeiríssima visita o SW pode ainda não controlar esta página;
-      // nesse caso o prefetch da próxima carga (já controlada) resolve.
+      prefetchAllMedia()
     }
-    // Pede armazenamento persistente pra o cache não ser despejado pelo navegador.
-    if (navigator.storage?.persist) navigator.storage.persist().catch(() => {})
-    await prefetchAllMedia()
   } catch {
     /* sem SW/rede: ignora, tenta de novo no próximo boot */
   }
