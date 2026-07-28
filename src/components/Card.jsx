@@ -19,15 +19,17 @@ export default function Card({ card, index = 0, isFlipped, isMatched, isWrong, o
             isFlipped ? '[transform:rotateY(180deg)]' : ''
           }`}
         >
-          {/* Verso — glassmorfismo: vidro translúcido com blur e brilho no topo */}
-          <div className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-white/8 shadow-card backdrop-blur-md [backface-visibility:hidden]">
+          {/* Verso — vidro translúcido com brilho no topo. Sem backdrop-blur:
+              sobre o fundo quase sólido a diferença é imperceptível, mas o blur
+              em 16 cartas girando trava a GPU dos tablets. */}
+          <div className="absolute inset-0 flex items-center justify-center overflow-hidden rounded-xl border border-white/15 bg-white/8 shadow-card [backface-visibility:hidden]">
             <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/18 to-transparent" />
             <img src={faviconUrl} alt="" className="relative h-[28%] w-[28%] opacity-45" />
           </div>
 
           {/* Frente — glass tingido conforme o estado (acerto / erro / neutro) */}
           <div
-            className={`absolute inset-0 flex items-center justify-center overflow-hidden rounded-xl border p-2 text-center backdrop-blur-md [backface-visibility:hidden] [transform:rotateY(180deg)] transition-colors duration-200 ${
+            className={`absolute inset-0 flex items-center justify-center overflow-hidden rounded-xl border p-2 text-center [backface-visibility:hidden] [transform:rotateY(180deg)] transition-colors duration-200 ${
               isMatched
                 ? 'border-lime-400/70 bg-lime-400/15 animate-[flashLime_0.9s_ease-out]'
                 : isWrong
@@ -39,7 +41,12 @@ export default function Card({ card, index = 0, isFlipped, isMatched, isWrong, o
             <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/16 to-transparent" />
 
             {card.mode === 'image' && card.image ? (
-              <img src={card.image} alt={card.text} className="relative h-full w-full rounded-md object-cover" />
+              <img
+                src={card.image}
+                alt={card.text}
+                decoding="async"
+                className="relative h-full w-full rounded-md object-cover"
+              />
             ) : (
               <p
                 className={`relative font-sans font-semibold leading-tight text-[clamp(0.7rem,2.4vw,1.15rem)] ${

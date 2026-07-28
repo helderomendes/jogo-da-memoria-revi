@@ -31,20 +31,52 @@ const QUEUE_KEYS = {
 
 const isOnline = () => (typeof navigator === 'undefined' ? true : navigator.onLine)
 
-// Rede primeiro com fallback no cache local. `remoteFn` deve LANÇAR em erro
-// (assim caímos no cache); em sucesso, atualiza o cache e retorna o dado.
+// Cache em memória (por sessão) — evita reparse do localStorage e devolve leitura
+// instantânea entre telas.
+const memCache = new Map()
+
+function getCache(key) {
+  if (memCache.has(key)) return memCache.get(key)
+  const v = readJSON(key, undefined)
+  if (v !== undefined) memCache.set(key, v)
+  return v
+}
+
+function setCache(key, data) {
+  memCache.set(key, data)
+  writeJSON(key, data)
+}
+
+// Stale-while-revalidate: se já existe cópia em cache, devolve NA HORA e
+// revalida no servidor em segundo plano (não trava a transição de tela). Só
+// espera a rede na primeira vez (cache vazio). `remoteFn` deve LANÇAR em erro.
 async function readWithCache(cacheKey, remoteFn, fallback) {
-  if (isOnline()) {
-    try {
-      const data = await remoteFn()
-      writeJSON(cacheKey, data)
-      return data
-    } catch (e) {
-      console.warn(`[offline] usando cache de ${cacheKey}:`, e?.message ?? e)
-    }
+  const cached = getCache(cacheKey)
+  const hasCached = cached !== undefined && cached !== null
+
+  const revalidate = () =>
+    remoteFn()
+      .then((data) => {
+        setCache(cacheKey, data)
+        return data
+      })
+      .catch((e) => {
+        console.warn(`[offline] usando cache de ${cacheKey}:`, e?.message ?? e)
+        return null
+      })
+
+  if (hasCached) {
+    // Revalida em background sem bloquear (só quando online).
+    if (isOnline()) revalidate()
+    return cached
   }
-  const cached = readJSON(cacheKey, null)
-  return cached != null ? cached : fallback
+
+  // Sem cache: primeira carga precisa esperar a rede (ou cair no fallback).
+  if (isOnline()) {
+    const data = await revalidate()
+    if (data != null) return data
+  }
+  return fallback
 }
 
 function enqueue(key, item) {
@@ -127,6 +159,7 @@ export async function saveCards(cards) {
   if (toDelete.length) await supabase.from('cards').delete().in('id', toDelete)
   const { error } = await supabase.from('cards').upsert(rows)
   if (error) throw error
+  setCache(CACHE_KEYS.cards, cards.map((c) => rowToCard({ ...c })))
   return cards
 }
 
@@ -187,6 +220,7 @@ export async function savePrizeTiers(tiers) {
   if (toDelete.length) await supabase.from('prize_tiers').delete().in('id', toDelete)
   const { error } = await supabase.from('prize_tiers').upsert(rows)
   if (error) throw error
+  setCache(CACHE_KEYS.tiers, rows.map(rowToTier))
   return tiers
 }
 
@@ -213,23 +247,23 @@ export async function awardPrize(correctPairs) {
 // Premiação 100% local: usa o cache de brindes, aplica a mesma regra de faixa/
 // estoque do servidor (determinePrize) e registra a baixa na fila de sync.
 function awardPrizeOffline(correctPairs) {
-  const tiers = readJSON(CACHE_KEYS.tiers, null) ?? DEFAULT_PRIZE_TIERS
+  const tiers = getCache(CACHE_KEYS.tiers) ?? DEFAULT_PRIZE_TIERS
   const chosen = determinePrize(correctPairs, tiers)
   if (!chosen) return null
 
   const updated = tiers.map((t) =>
     t.id === chosen.id && typeof t.stock === 'number' ? { ...t, stock: Math.max(0, t.stock - 1) } : t,
   )
-  writeJSON(CACHE_KEYS.tiers, updated)
+  setCache(CACHE_KEYS.tiers, updated)
   enqueue(QUEUE_KEYS.awards, { tierId: chosen.id, at: new Date().toISOString() })
   return chosen
 }
 
 // Reflete no cache local a baixa que o servidor acabou de fazer (premiação online).
 function syncTierStockCache(tier) {
-  const tiers = readJSON(CACHE_KEYS.tiers, null)
+  const tiers = getCache(CACHE_KEYS.tiers)
   if (!tiers) return
-  writeJSON(
+  setCache(
     CACHE_KEYS.tiers,
     tiers.map((t) => (t.id === tier.id ? { ...t, stock: tier.stock } : t)),
   )
@@ -253,7 +287,9 @@ export async function resetPrizeStock() {
   }))
   const { error } = await supabase.from('prize_tiers').upsert(rows)
   if (error) throw error
-  return rows.map(rowToTier)
+  const mapped = rows.map(rowToTier)
+  setCache(CACHE_KEYS.tiers, mapped)
+  return mapped
 }
 
 // --- Configuração do jogo ---
@@ -272,6 +308,7 @@ export async function saveGameConfig(config) {
     .from('game_config')
     .upsert({ id: 1, data: config, updated_at: new Date().toISOString() })
   if (error) throw error
+  setCache(CACHE_KEYS.config, { ...DEFAULT_GAME_CONFIG, ...config })
   return config
 }
 
@@ -378,7 +415,7 @@ export async function syncPending() {
     writeJSON(QUEUE_KEYS.awards, remaining)
     // Reatualiza o snapshot local de brindes com o estoque real do servidor.
     try {
-      await fetchPrizeTiersRemote().then((t) => writeJSON(CACHE_KEYS.tiers, t))
+      await fetchPrizeTiersRemote().then((t) => setCache(CACHE_KEYS.tiers, t))
     } catch {
       /* sem rede de novo: mantém o cache atual */
     }

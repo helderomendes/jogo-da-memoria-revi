@@ -17,7 +17,7 @@ export default function PrizeMedia({ tier, size = 96, tone = 'lime', className =
       style={{ width: size, height: size }}
     >
       {tier?.image ? (
-        <img src={tier.image} alt={tier.label ?? ''} className="h-full w-full object-cover" />
+        <img src={tier.image} alt={tier.label ?? ''} decoding="async" className="h-full w-full object-cover" />
       ) : (
         <Icon size={size * 0.46} strokeWidth={1.75} className="text-lime-400" />
       )}

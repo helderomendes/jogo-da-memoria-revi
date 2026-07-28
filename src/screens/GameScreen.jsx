@@ -34,6 +34,15 @@ export default function GameScreen() {
       setChancesLeft(cfg.totalChances)
       setBoard(buildBoard(session.pairs))
     })
+    // Pré-carrega as capas durante a contagem "MEMORIZE, 3, 2, 1", pra elas já
+    // estarem decodificadas quando as cartas virarem — sem travar o flip.
+    session.pairs.forEach((p) => {
+      if (p.image) {
+        const img = new Image()
+        img.decoding = 'async'
+        img.src = p.image
+      }
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

@@ -26,13 +26,12 @@ const SPARKLES = [
 ]
 
 // Spotlights borrados espalhados pelo fundo — derivam sozinhos, sem interação.
+// Poucos e grandes: blur-3xl animado é caro em GPU de tablet, então mantemos
+// só 3 pra dar o clima sem travar.
 const SPOTLIGHTS = [
   { top: '-6%', left: '8%', size: '46vh', color: 'rgba(30,134,230,0.45)', dur: '13s', delay: '0s' },
   { top: '4%', left: '64%', size: '40vh', color: 'rgba(86,187,238,0.38)', dur: '16s', delay: '1.5s' },
-  { top: '30%', left: '-8%', size: '38vh', color: 'rgba(62,75,176,0.40)', dur: '15s', delay: '0.8s' },
-  { top: '24%', left: '78%', size: '42vh', color: 'rgba(124,198,255,0.30)', dur: '18s', delay: '2.2s' },
   { top: '46%', left: '34%', size: '44vh', color: 'rgba(30,134,230,0.30)', dur: '14s', delay: '1s' },
-  { top: '52%', left: '82%', size: '34vh', color: 'rgba(50,199,0,0.20)', dur: '17s', delay: '0.4s' },
 ]
 
 // Tons de card — todos no azul da marca, com acentos sky/lime.
@@ -62,7 +61,7 @@ function WheelCard({ card, tint, index }) {
       >
         <div
           style={hasImage ? undefined : { backgroundImage: tint }}
-          className="relative flex w-[clamp(120px,15vw,210px)] flex-col items-center justify-between overflow-hidden rounded-[clamp(14px,1.8vw,24px)] border border-white/12 text-center shadow-card backdrop-blur-md aspect-[4/5]"
+          className="relative flex w-[clamp(120px,15vw,210px)] flex-col items-center justify-between overflow-hidden rounded-[clamp(14px,1.8vw,24px)] border border-white/12 text-center shadow-card aspect-[4/5]"
         >
           {hasImage ? (
             <img src={card.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
