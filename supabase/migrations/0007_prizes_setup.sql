@@ -18,7 +18,7 @@ alter table public.prize_tiers add column if not exists image text;
 
 insert into public.prize_tiers (id, pairs, label, description, icon, enabled, stock_initial, stock, sort_order) values
   ('chocolate', 1, 'Chocolate GoldKo',    '1 par certo. Um docinho pra comemorar.',                           'candy',  true, 50, 50, 1),
-  ('bottom',    1, 'Bottom',              '1 par certo. Leve um Bottom.',                                     'cookie', true, 50, 50, 2),
+  ('bottom',    1, 'Bottom',              '1 par certo. Leve um Bottom.',                                     'star',   true, 50, 50, 2),
   ('magnesio',  2, 'Magnésio da Equaliv', '2 pares certos. Magnésio da Equaliv.',                             'pill',   true, 50, 50, 3),
   ('parceiro',  3, 'Brinde do Parceiro',  '3 pares certos. Brinde especial do parceiro.',                     'gift',   true, 50, 50, 4),
   ('chaveiro',  3, 'Chaveiro ROI',        '3 pares certos. Leve o chaveiro do ROI.',                          'key',    true, 50, 50, 5),

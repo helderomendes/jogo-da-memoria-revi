@@ -28,7 +28,7 @@ export const DEFAULT_PRIZE_TIERS = [
     pairs: 1,
     label: 'Bottom',
     description: '1 par certo. Leve um Bottom.',
-    icon: 'cookie',
+    icon: 'star',
     image: null,
     enabled: true,
     stockInitial: 50,
