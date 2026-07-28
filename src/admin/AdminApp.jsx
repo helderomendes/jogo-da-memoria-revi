@@ -9,6 +9,7 @@ import CardsEditor from './CardsEditor'
 import PrizesEditor from './PrizesEditor'
 import ConfigEditor from './ConfigEditor'
 import LogsTable from './LogsTable'
+import { versionLabel } from '../components/VersionBadge'
 
 const TABS = [
   { id: 'dashboard', label: 'Visão geral' },
@@ -49,6 +50,7 @@ export default function AdminApp() {
           <Logo className="h-6" />
           <span className="text-white/40">·</span>
           <h1 className="text-lg font-semibold">Admin do Totem</h1>
+          <span className="ml-1 font-mono text-[11px] text-white/40">{versionLabel}</span>
         </div>
         <div className="flex items-center gap-4 text-sm">
           <span className="hidden text-white/50 sm:inline">{session.user?.email}</span>

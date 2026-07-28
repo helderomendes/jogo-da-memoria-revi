@@ -3,8 +3,17 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Selo de versão: hash do commit (a Vercel expõe VERCEL_GIT_COMMIT_SHA no build)
+// + data/hora do build. Muda a cada deploy, então prova o que está no ar.
+const COMMIT = (process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7) || 'dev'
+const BUILD_TIME = new Date().toISOString()
+
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(COMMIT),
+    __BUILD_TIME__: JSON.stringify(BUILD_TIME),
+  },
   plugins: [
     react(),
     tailwindcss(),

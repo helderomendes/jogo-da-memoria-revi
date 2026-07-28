@@ -4,6 +4,7 @@ import { getGameConfig } from './utils/dataStore'
 import { useIdleTimer } from './utils/useIdleTimer'
 import { useOfflineSync } from './utils/useOfflineSync'
 import OfflineBadge from './components/OfflineBadge'
+import VersionBadge from './components/VersionBadge'
 import IdleScreen from './screens/IdleScreen'
 import RegisterScreen from './screens/RegisterScreen'
 import InstructionsScreen from './screens/InstructionsScreen'
@@ -49,6 +50,7 @@ function KioskFlow() {
   return (
     <div className="fixed inset-0 overflow-y-auto bg-revi-gradient transition-opacity duration-300">
       <OfflineBadge online={online} pending={pending} />
+      <VersionBadge />
       <ScreenComponent />
     </div>
   )
