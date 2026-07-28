@@ -11,24 +11,24 @@
 //   icon         = nome do ícone (ver src/data/prizeIcons.js).
 //   image        = URL da foto do brinde (crop circular). null = usa o ícone.
 export const DEFAULT_PRIZE_TIERS = [
-  // 1 acerto — sorteio entre Squeeze e Chocolate
-  {
-    id: 'bottle',
-    pairs: 1,
-    label: 'Squeeze Revi',
-    description: '1 par certo. Leve um squeeze da Revi.',
-    icon: 'bottle',
-    image: null,
-    enabled: true,
-    stockInitial: 50,
-    stock: 50,
-  },
+  // 1 acerto — sorteio entre Chocolate e Bombom
   {
     id: 'chocolate',
     pairs: 1,
     label: 'Chocolate GoldKo',
     description: '1 par certo. Um docinho pra comemorar.',
     icon: 'candy',
+    image: null,
+    enabled: true,
+    stockInitial: 50,
+    stock: 50,
+  },
+  {
+    id: 'bombom',
+    pairs: 1,
+    label: 'Bombom',
+    description: '1 par certo. Um bombom pra adoçar.',
+    icon: 'cookie',
     image: null,
     enabled: true,
     stockInitial: 50,
