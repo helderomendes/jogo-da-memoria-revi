@@ -90,6 +90,24 @@ export function getPendingCount() {
   return readJSON(QUEUE_KEYS.logs, []).length + readJSON(QUEUE_KEYS.awards, []).length
 }
 
+// Pré-baixa TODAS as imagens (capas dos cards + fotos dos brindes) pro cache do
+// Service Worker, mesmo as que ainda não apareceram na tela. Assim elas ficam
+// disponíveis offline e sobrevivem a reboots/reload — o cache do SW (CacheFirst)
+// é persistente e não some entre sessões nem entre deploys.
+export async function prefetchAllMedia() {
+  if (!isOnline()) return 0
+  try {
+    const [cards, tiers] = await Promise.all([getCards(), getPrizeTiers()])
+    const urls = [...(cards ?? []), ...(tiers ?? [])].map((x) => x?.image).filter(Boolean)
+    const unique = [...new Set(urls)]
+    // fetch normal → interceptado pelo SW (CacheFirst) e guardado no cache.
+    await Promise.allSettled(unique.map((u) => fetch(u).catch(() => {})))
+    return unique.length
+  } catch {
+    return 0
+  }
+}
+
 // Tag de origem: todo lead do totem é marcado com ela. Sempre normalizamos para
 // que 'jogo-da-memoria' fique como a ÚLTIMA tag, independente do que o admin
 // adicionar manualmente.

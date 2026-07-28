@@ -56,7 +56,9 @@ export default defineConfig({
             method: 'GET',
             options: {
               cacheName: 'sb-storage',
-              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              // Limite alto e validade longa: guardamos TODAS as capas e fotos
+              // de brindes; elas persistem entre sessões, reboots e deploys.
+              expiration: { maxEntries: 600, maxAgeSeconds: 60 * 60 * 24 * 180 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },
