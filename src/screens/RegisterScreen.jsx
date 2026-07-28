@@ -36,7 +36,15 @@ function Field({ field, active, ...props }) {
       />
       <input
         {...props}
-        className={`w-full rounded-xl border-[1.5px] bg-white/4 pl-14 pr-6 py-5 text-left text-2xl font-semibold text-white outline-none transition-colors placeholder:text-ink-300 focus:bg-white/6 ${
+        // Totem: só o teclado virtual do site escreve nos campos. `readOnly` +
+        // `inputMode="none"` impedem o teclado nativo do SO de abrir ao tocar,
+        // mas o campo continua focável (mantém o realce e troca o teclado ativo).
+        readOnly
+        inputMode="none"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        className={`w-full cursor-pointer rounded-xl border-[1.5px] bg-white/4 pl-14 pr-6 py-5 text-left text-2xl font-semibold text-white caret-transparent outline-none transition-colors placeholder:text-ink-300 focus:bg-white/6 ${
           active ? FIELD_STYLE[field] : 'border-white/8'
         }`}
       />
