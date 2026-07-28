@@ -32,12 +32,16 @@ insert into public.cards (id, text, image, mode, sort_order) values
   ('p25', 'Revi 3 Anos',                   null, 'text', 25)
 on conflict (id) do nothing;
 
--- Brindes por acerto + estoque.
+-- Brindes por faixa de acertos + estoque. Vários brindes no mesmo `pairs` =
+-- o jogo sorteia um (peso pelo estoque). Faixas com gaps fazem downgrade.
 insert into public.prize_tiers (id, pairs, label, description, icon, enabled, stock_initial, stock, sort_order) values
-  ('chocolate', 1,    'Chocolate GoldKo', '1 par certo. Um docinho pra comemorar.',            'candy',  true,  100, 100, 1),
-  ('sacola',    2,    'Sacola Revi',      '2 pares certos. Leve a sacola pra casa.',            'bag',    true,   50,  50, 2),
-  ('giftcard',  3,    'Gift Card',        '3 de 3 pares certos — resultado máximo!',            'card',   true,   20,  20, 3),
-  ('bottle',    null, 'Squeeze Revi',     'Prêmio reserva — ainda sem regra de liberação.',     'bottle', false,  30,  30, 4)
+  ('bottle',    1, 'Squeeze Revi',        '1 par certo. Leve um squeeze da Revi.',                        'bottle', true, 50, 50, 1),
+  ('chocolate', 1, 'Chocolate GoldKo',    '1 par certo. Um docinho pra comemorar.',                       'candy',  true, 50, 50, 2),
+  ('magnesio',  2, 'Magnésio da Equaliv', '2 pares certos. Magnésio da Equaliv.',                         'pill',   true, 50, 50, 3),
+  ('parceiro',  3, 'Brinde do Parceiro',  '3 pares certos. Brinde especial do parceiro.',                 'gift',   true, 50, 50, 4),
+  ('chaveiro',  3, 'Chaveiro ROI',        '3 pares certos. Leve o chaveiro do ROI.',                      'key',    true, 50, 50, 5),
+  ('sacola',    4, 'Sacola Revi',         '4 pares certos. Leve a sacola pra casa.',                      'bag',    true, 50, 50, 6),
+  ('giftcard',  6, 'Gift Card',           '6 pares certos — resultado máximo! Gift card por email/WhatsApp.', 'card', true, 20, 20, 7)
 on conflict (id) do nothing;
 
 -- Configuração do jogo (linha única).

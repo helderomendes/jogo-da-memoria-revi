@@ -1,7 +1,7 @@
-// Faixas de prêmio. `pairs` = número exato de pares certos que libera a faixa.
-// Com 3 chances totais, o jogador fecha no máximo 3 pares — por isso as faixas
-// vão de 1 a 3. A faixa `bottle` fica sem `pairs` (reserva): defina no admin
-// a regra de quando ela deve ser liberada.
+// Faixas de prêmio. `pairs` = número de pares certos que libera a faixa.
+// Pode haver VÁRIOS brindes no mesmo `pairs` — nesse caso o jogo sorteia um
+// (peso proporcional ao estoque). Faixas com gaps (ex.: 4 e 6) fazem downgrade:
+// quem faz 5 acertos leva a faixa 4.
 //
 // Campos de estoque (editáveis no admin):
 //   stockInitial = quantidade cadastrada de brindes dessa faixa (referência).
@@ -11,6 +11,18 @@
 //   icon         = nome do ícone (ver src/data/prizeIcons.js).
 //   image        = URL da foto do brinde (crop circular). null = usa o ícone.
 export const DEFAULT_PRIZE_TIERS = [
+  // 1 acerto — sorteio entre Squeeze e Chocolate
+  {
+    id: 'bottle',
+    pairs: 1,
+    label: 'Squeeze Revi',
+    description: '1 par certo. Leve um squeeze da Revi.',
+    icon: 'bottle',
+    image: null,
+    enabled: true,
+    stockInitial: 50,
+    stock: 50,
+  },
   {
     id: 'chocolate',
     pairs: 1,
@@ -19,40 +31,66 @@ export const DEFAULT_PRIZE_TIERS = [
     icon: 'candy',
     image: null,
     enabled: true,
-    stockInitial: 100,
-    stock: 100,
+    stockInitial: 50,
+    stock: 50,
   },
+  // 2 acertos — Magnésio da Equaliv
   {
-    id: 'sacola',
+    id: 'magnesio',
     pairs: 2,
-    label: 'Sacola Revi',
-    description: '2 pares certos. Leve a sacola pra casa.',
-    icon: 'bag',
+    label: 'Magnésio da Equaliv',
+    description: '2 pares certos. Magnésio da Equaliv.',
+    icon: 'pill',
+    image: null,
+    enabled: true,
+    stockInitial: 50,
+    stock: 50,
+  },
+  // 3 acertos — sorteio entre Brinde do Parceiro e Chaveiro ROI
+  {
+    id: 'parceiro',
+    pairs: 3,
+    label: 'Brinde do Parceiro',
+    description: '3 pares certos. Brinde especial do parceiro.',
+    icon: 'gift',
     image: null,
     enabled: true,
     stockInitial: 50,
     stock: 50,
   },
   {
-    id: 'giftcard',
+    id: 'chaveiro',
     pairs: 3,
+    label: 'Chaveiro ROI',
+    description: '3 pares certos. Leve o chaveiro do ROI.',
+    icon: 'key',
+    image: null,
+    enabled: true,
+    stockInitial: 50,
+    stock: 50,
+  },
+  // 4 acertos — Sacola Revi
+  {
+    id: 'sacola',
+    pairs: 4,
+    label: 'Sacola Revi',
+    description: '4 pares certos. Leve a sacola pra casa.',
+    icon: 'bag',
+    image: null,
+    enabled: true,
+    stockInitial: 50,
+    stock: 50,
+  },
+  // 6 acertos — Gift Card (entregue por email ou WhatsApp)
+  {
+    id: 'giftcard',
+    pairs: 6,
     label: 'Gift Card',
-    description: '3 de 3 pares certos — resultado máximo!',
+    description: '6 pares certos — resultado máximo! Gift card por email ou WhatsApp.',
     icon: 'card',
     image: null,
     enabled: true,
     stockInitial: 20,
     stock: 20,
-  },
-  {
-    id: 'bottle',
-    pairs: null,
-    label: 'Squeeze Revi',
-    description: 'Prêmio reserva — ainda sem regra de liberação definida.',
-    icon: 'bottle',
-    image: null,
-    enabled: false,
-    stockInitial: 30,
-    stock: 30,
   },
 ]

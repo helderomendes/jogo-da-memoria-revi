@@ -166,8 +166,8 @@ export default function PrizesEditor() {
         <div>
           <h2 className="text-lg font-bold">Brindes por acerto ({tiers.length})</h2>
           <p className="text-sm text-ink-dim">
-            "Pares certos" define a faixa (1 a 3). O estoque dá baixa a cada entrega; esgotou,
-            o jogo entrega a faixa imediatamente abaixo que ainda tenha brinde.
+            "Pares certos" define a faixa. Vários brindes na mesma faixa? O jogo sorteia um
+            (peso pelo estoque). Esgotou a faixa, entrega a de baixo que ainda tenha brinde.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -241,7 +241,7 @@ export default function PrizesEditor() {
                 <input
                   type="number"
                   min={1}
-                  max={3}
+                  max={12}
                   value={tier.pairs ?? ''}
                   onChange={(e) => updateTier(tier.id, { pairs: numOrNull(e.target.value) })}
                   placeholder="—"
