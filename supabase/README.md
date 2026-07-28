@@ -16,6 +16,7 @@ cole e rode, nesta ordem:
 3. `supabase/migrations/0003_leads_tags_edit.sql` — tags/edição de leads
 4. `supabase/migrations/0004_prize_images.sql` — foto dos brindes (coluna `image` + bucket `prize-images`)
 5. `supabase/migrations/0005_decrement_stock.sql` — baixa de estoque avulsa (usada pela sync do modo offline)
+6. `supabase/migrations/0006_award_weighted.sql` — premiação com sorteio ponderado por estoque quando há vários brindes na mesma faixa
 
 ## Modo offline (PWA)
 
