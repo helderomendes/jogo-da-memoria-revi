@@ -61,7 +61,7 @@ function WheelCard({ card, tint, index }) {
       >
         <div
           style={hasImage ? undefined : { backgroundImage: tint }}
-          className="relative flex w-[clamp(120px,15vw,210px)] flex-col items-center justify-between overflow-hidden rounded-[clamp(14px,1.8vw,24px)] border border-white/12 text-center shadow-card aspect-[4/5]"
+          className="relative flex w-[clamp(160px,20vw,300px)] flex-col items-center justify-between overflow-hidden rounded-[clamp(16px,2.2vw,30px)] border border-white/12 text-center shadow-card aspect-[4/5]"
         >
           {hasImage ? (
             <img src={card.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -189,7 +189,7 @@ export default function IdleScreen() {
             <Sparkles size={13} /> apresenta
           </span>
 
-          <h1 className="text-[clamp(2.6rem,7.5vw,5.5rem)] font-extrabold uppercase leading-[0.92] tracking-tight">
+          <h1 className="text-[clamp(3.4rem,11vw,8rem)] font-extrabold uppercase leading-[0.9] tracking-tight">
             <span className="block text-white">Jogo da</span>
             <span
               className="block bg-gradient-to-r from-lime-300 via-lime-400 to-sky-400 bg-clip-text text-transparent animate-[titleShine_5s_ease-in-out_infinite]"
@@ -199,8 +199,8 @@ export default function IdleScreen() {
             </span>
           </h1>
 
-          <p className="max-w-md text-[clamp(0.95rem,1.8vw,1.35rem)] text-ink-200">
-            Encontre os pares, teste sua memória e desbloqueie seu prêmio Revi.
+          <p className="max-w-2xl text-[clamp(1.3rem,3vw,2.4rem)] font-bold leading-tight text-white">
+            Encontre os pares e <span className="text-lime-400">ganhe brindes</span> na hora!
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-2">
