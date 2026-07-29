@@ -12,6 +12,8 @@ import GameScreen from './screens/GameScreen'
 import ResultScreen from './screens/ResultScreen'
 import PrizeScreen from './screens/PrizeScreen'
 import ThanksScreen from './screens/ThanksScreen'
+import PauseScreen from './screens/PauseScreen'
+import LongPressHotspot from './components/LongPressHotspot'
 
 const SCREEN_COMPONENTS = {
   [SCREENS.IDLE]: IdleScreen,
@@ -24,7 +26,7 @@ const SCREEN_COMPONENTS = {
 }
 
 function KioskFlow() {
-  const { screen, resetToIdle } = useKiosk()
+  const { screen, resetToIdle, paused, setPaused } = useKiosk()
   const [idleTimeoutMs, setIdleTimeoutMs] = useState(null)
   const { online, pending } = useOfflineSync()
 
@@ -51,7 +53,15 @@ function KioskFlow() {
     <div className="fixed inset-0 overflow-y-auto bg-revi-gradient transition-opacity duration-300">
       <OfflineBadge online={online} pending={pending} />
       <VersionBadge />
-      <ScreenComponent />
+      {paused ? (
+        <PauseScreen />
+      ) : (
+        <>
+          <ScreenComponent />
+          {/* Só na tela inicial: toque longo no canto ativa a pausa (operador). */}
+          {screen === SCREENS.IDLE && <LongPressHotspot onTrigger={() => setPaused(true)} />}
+        </>
+      )}
     </div>
   )
 }
