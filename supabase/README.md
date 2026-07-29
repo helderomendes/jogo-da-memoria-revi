@@ -17,7 +17,8 @@ cole e rode, nesta ordem:
 4. `supabase/migrations/0004_prize_images.sql` — foto dos brindes (coluna `image` + bucket `prize-images`)
 5. `supabase/migrations/0005_decrement_stock.sql` — baixa de estoque avulsa (usada pela sync do modo offline)
 6. `supabase/migrations/0006_award_weighted.sql` — premiação com sorteio ponderado por estoque quando há vários brindes na mesma faixa
-7. `supabase/migrations/0007_prizes_setup.sql` — reconfigura os brindes por faixa (1/2/3/4/6 acertos), preservando fotos já enviadas
+7. `supabase/migrations/0007_prizes_setup.sql` — (histórico) brindes nomeados por faixa
+8. `supabase/migrations/0008_prizes_surprise.sql` — brinde "Surpresa" por faixa (1 a 6), sem nomes; prêmio definido na hora
 
 ## Modo offline (PWA)
 

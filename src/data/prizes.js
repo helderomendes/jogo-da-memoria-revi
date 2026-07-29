@@ -1,96 +1,30 @@
 // Faixas de prêmio. `pairs` = número de pares certos que libera a faixa.
-// Pode haver VÁRIOS brindes no mesmo `pairs` — nesse caso o jogo sorteia um
-// (peso proporcional ao estoque). Faixas com gaps (ex.: 4 e 6) fazem downgrade:
-// quem faz 5 acertos leva a faixa 4.
+// Agora cada faixa é um BRINDE SURPRESA — o prêmio real é definido na hora pela
+// equipe. Estoque ilimitado (null): todo mundo que fecha pelo menos 1 par ganha.
 //
-// Campos de estoque (editáveis no admin):
-//   stockInitial = quantidade cadastrada de brindes dessa faixa (referência).
-//   stock        = quantidade ainda disponível; dá baixa a cada prêmio entregue.
-//                  `null` = estoque ilimitado (nunca esgota).
-//   enabled      = se false, a faixa é ignorada na premiação (reserva/desativada).
+// Campos (editáveis no admin):
+//   pairs        = pares certos que liberam a faixa.
+//   stock        = null = ilimitado (nunca esgota). Número = dá baixa a cada entrega.
+//   enabled      = se false, a faixa é ignorada na premiação.
 //   icon         = nome do ícone (ver src/data/prizeIcons.js).
 //   image        = URL da foto do brinde (crop circular). null = usa o ícone.
+const surprise = (pairs) => ({
+  id: `surpresa${pairs}`,
+  pairs,
+  label: 'Surpresa',
+  description: `${pairs} ${pairs === 1 ? 'par certo' : 'pares certos'}. Você ganhou um brinde surpresa!`,
+  icon: 'gift',
+  image: null,
+  enabled: true,
+  stockInitial: null,
+  stock: null,
+})
+
 export const DEFAULT_PRIZE_TIERS = [
-  // 1 acerto — sorteio entre Chocolate e Bottom
-  {
-    id: 'chocolate',
-    pairs: 1,
-    label: 'Chocolate GoldKo',
-    description: '1 par certo. Um docinho pra comemorar.',
-    icon: 'candy',
-    image: null,
-    enabled: true,
-    stockInitial: 50,
-    stock: 50,
-  },
-  {
-    id: 'bottom',
-    pairs: 1,
-    label: 'Bottom',
-    description: '1 par certo. Leve um Bottom.',
-    icon: 'star',
-    image: null,
-    enabled: true,
-    stockInitial: 50,
-    stock: 50,
-  },
-  // 2 acertos — Magnésio da Equaliv
-  {
-    id: 'magnesio',
-    pairs: 2,
-    label: 'Magnésio da Equaliv',
-    description: '2 pares certos. Magnésio da Equaliv.',
-    icon: 'pill',
-    image: null,
-    enabled: true,
-    stockInitial: 50,
-    stock: 50,
-  },
-  // 3 acertos — sorteio entre Brinde do Parceiro e Chaveiro ROI
-  {
-    id: 'parceiro',
-    pairs: 3,
-    label: 'Brinde do Parceiro',
-    description: '3 pares certos. Brinde especial do parceiro.',
-    icon: 'gift',
-    image: null,
-    enabled: true,
-    stockInitial: 50,
-    stock: 50,
-  },
-  {
-    id: 'chaveiro',
-    pairs: 3,
-    label: 'Chaveiro ROI',
-    description: '3 pares certos. Leve o chaveiro do ROI.',
-    icon: 'key',
-    image: null,
-    enabled: true,
-    stockInitial: 50,
-    stock: 50,
-  },
-  // 4 acertos — Sacola Revi
-  {
-    id: 'sacola',
-    pairs: 4,
-    label: 'Sacola Revi',
-    description: '4 pares certos. Leve a sacola pra casa.',
-    icon: 'bag',
-    image: null,
-    enabled: true,
-    stockInitial: 50,
-    stock: 50,
-  },
-  // 6 acertos — Gift Card (entregue por email ou WhatsApp)
-  {
-    id: 'giftcard',
-    pairs: 6,
-    label: 'Gift Card',
-    description: '6 pares certos — resultado máximo! Gift card por email ou WhatsApp.',
-    icon: 'card',
-    image: null,
-    enabled: true,
-    stockInitial: 20,
-    stock: 20,
-  },
+  surprise(1),
+  surprise(2),
+  surprise(3),
+  surprise(4),
+  surprise(5),
+  surprise(6),
 ]

@@ -32,16 +32,15 @@ insert into public.cards (id, text, image, mode, sort_order) values
   ('p25', 'Revi 3 Anos',                   null, 'text', 25)
 on conflict (id) do nothing;
 
--- Brindes por faixa de acertos + estoque. Vários brindes no mesmo `pairs` =
--- o jogo sorteia um (peso pelo estoque). Faixas com gaps fazem downgrade.
+-- Brinde SURPRESA por faixa de acertos (1 a 6). O prêmio real é definido na
+-- hora pela equipe. Estoque ilimitado: quem fecha pelo menos 1 par ganha.
 insert into public.prize_tiers (id, pairs, label, description, icon, enabled, stock_initial, stock, sort_order) values
-  ('chocolate', 1, 'Chocolate GoldKo',    '1 par certo. Um docinho pra comemorar.',                       'candy',  true, 50, 50, 1),
-  ('bottom',    1, 'Bottom',              '1 par certo. Leve um Bottom.',                                 'star',   true, 50, 50, 2),
-  ('magnesio',  2, 'Magnésio da Equaliv', '2 pares certos. Magnésio da Equaliv.',                         'pill',   true, 50, 50, 3),
-  ('parceiro',  3, 'Brinde do Parceiro',  '3 pares certos. Brinde especial do parceiro.',                 'gift',   true, 50, 50, 4),
-  ('chaveiro',  3, 'Chaveiro ROI',        '3 pares certos. Leve o chaveiro do ROI.',                      'key',    true, 50, 50, 5),
-  ('sacola',    4, 'Sacola Revi',         '4 pares certos. Leve a sacola pra casa.',                      'bag',    true, 50, 50, 6),
-  ('giftcard',  6, 'Gift Card',           '6 pares certos — resultado máximo! Gift card por email/WhatsApp.', 'card', true, 20, 20, 7)
+  ('surpresa1', 1, 'Surpresa', '1 par certo. Você ganhou um brinde surpresa!',    'gift', true, null, null, 1),
+  ('surpresa2', 2, 'Surpresa', '2 pares certos. Você ganhou um brinde surpresa!', 'gift', true, null, null, 2),
+  ('surpresa3', 3, 'Surpresa', '3 pares certos. Você ganhou um brinde surpresa!', 'gift', true, null, null, 3),
+  ('surpresa4', 4, 'Surpresa', '4 pares certos. Você ganhou um brinde surpresa!', 'gift', true, null, null, 4),
+  ('surpresa5', 5, 'Surpresa', '5 pares certos. Você ganhou um brinde surpresa!', 'gift', true, null, null, 5),
+  ('surpresa6', 6, 'Surpresa', '6 pares certos. Você ganhou um brinde surpresa!', 'gift', true, null, null, 6)
 on conflict (id) do nothing;
 
 -- Configuração do jogo (linha única).
