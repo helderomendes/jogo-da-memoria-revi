@@ -18,7 +18,8 @@ cole e rode, nesta ordem:
 5. `supabase/migrations/0005_decrement_stock.sql` — baixa de estoque avulsa (usada pela sync do modo offline)
 6. `supabase/migrations/0006_award_weighted.sql` — premiação com sorteio ponderado por estoque quando há vários brindes na mesma faixa
 7. `supabase/migrations/0007_prizes_setup.sql` — (histórico) brindes nomeados por faixa
-8. `supabase/migrations/0008_prizes_surprise.sql` — brinde "Surpresa" por faixa (1 a 6), sem nomes; prêmio definido na hora
+8. `supabase/migrations/0008_prizes_surprise.sql` — (histórico) brinde "Surpresa" por faixa (1 a 6)
+9. `supabase/migrations/0009_prizes_min4.sql` — só 4+ acertos ganham (faixas 4, 5, 6); 1 a 3 não ganham
 
 ## Modo offline (PWA)
 

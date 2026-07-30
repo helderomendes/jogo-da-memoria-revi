@@ -1,6 +1,7 @@
 // Faixas de prêmio. `pairs` = número de pares certos que libera a faixa.
-// Agora cada faixa é um BRINDE SURPRESA — o prêmio real é definido na hora pela
-// equipe. Estoque ilimitado (null): todo mundo que fecha pelo menos 1 par ganha.
+// Cada faixa é um BRINDE SURPRESA — o prêmio real é definido na hora pela
+// equipe. Só ganha quem fecha 4 pares OU MAIS; de 1 a 3 acertos não ganha nada.
+// Estoque ilimitado (null): não esgota.
 //
 // Campos (editáveis no admin):
 //   pairs        = pares certos que liberam a faixa.
@@ -20,11 +21,5 @@ const surprise = (pairs) => ({
   stock: null,
 })
 
-export const DEFAULT_PRIZE_TIERS = [
-  surprise(1),
-  surprise(2),
-  surprise(3),
-  surprise(4),
-  surprise(5),
-  surprise(6),
-]
+// Só 4+ acertos ganham. De 1 a 3 pares o jogador não recebe brinde.
+export const DEFAULT_PRIZE_TIERS = [surprise(4), surprise(5), surprise(6)]

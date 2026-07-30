@@ -32,12 +32,10 @@ insert into public.cards (id, text, image, mode, sort_order) values
   ('p25', 'Revi 3 Anos',                   null, 'text', 25)
 on conflict (id) do nothing;
 
--- Brinde SURPRESA por faixa de acertos (1 a 6). O prêmio real é definido na
--- hora pela equipe. Estoque ilimitado: quem fecha pelo menos 1 par ganha.
+-- Brinde SURPRESA por faixa de acertos. Só ganha quem fecha 4 pares OU MAIS;
+-- de 1 a 3 acertos não recebe nada. Estoque ilimitado; prêmio real definido
+-- na hora pela equipe.
 insert into public.prize_tiers (id, pairs, label, description, icon, enabled, stock_initial, stock, sort_order) values
-  ('surpresa1', 1, 'Surpresa', '1 par certo. Você ganhou um brinde surpresa!',    'gift', true, null, null, 1),
-  ('surpresa2', 2, 'Surpresa', '2 pares certos. Você ganhou um brinde surpresa!', 'gift', true, null, null, 2),
-  ('surpresa3', 3, 'Surpresa', '3 pares certos. Você ganhou um brinde surpresa!', 'gift', true, null, null, 3),
   ('surpresa4', 4, 'Surpresa', '4 pares certos. Você ganhou um brinde surpresa!', 'gift', true, null, null, 4),
   ('surpresa5', 5, 'Surpresa', '5 pares certos. Você ganhou um brinde surpresa!', 'gift', true, null, null, 5),
   ('surpresa6', 6, 'Surpresa', '6 pares certos. Você ganhou um brinde surpresa!', 'gift', true, null, null, 6)
