@@ -7,6 +7,7 @@ import {
   updateGameLog,
   deleteGameLog,
   normalizeTags,
+  leadKey,
   SOURCE_TAG,
 } from '../utils/dataStore'
 
@@ -39,6 +40,27 @@ function logsToCSV(logs) {
     }).join(','),
   )
   return [header, ...rows].join('\n')
+}
+
+// Um registro por lead único. Recebe a lista já ordenada (mais recente primeiro)
+// e mantém a primeira ocorrência de cada chave = a partida mais recente da pessoa.
+function uniqueLeads(logs) {
+  const seen = new Map()
+  for (const log of logs) {
+    const key = leadKey(log)
+    if (key && !seen.has(key)) seen.set(key, log)
+  }
+  return [...seen.values()]
+}
+
+function downloadCSV(csv, filename) {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  link.click()
+  URL.revokeObjectURL(url)
 }
 
 // datetime-local espera 'YYYY-MM-DDTHH:mm' no horário local.
@@ -240,17 +262,18 @@ export default function LogsTable() {
     )
   }, [logs, query])
 
+  const uniques = useMemo(() => uniqueLeads(filtered), [filtered])
+
   if (!logs) return <p>Carregando...</p>
 
+  const today = new Date().toISOString().slice(0, 10)
+
   const handleExport = () => {
-    const csv = logsToCSV(filtered)
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `revi-memoria-leads-${new Date().toISOString().slice(0, 10)}.csv`
-    link.click()
-    URL.revokeObjectURL(url)
+    downloadCSV(logsToCSV(filtered), `revi-memoria-partidas-${today}.csv`)
+  }
+
+  const handleExportUnique = () => {
+    downloadCSV(logsToCSV(uniques), `revi-memoria-leads-unicos-${today}.csv`)
   }
 
   const handleClear = async () => {
@@ -279,7 +302,7 @@ export default function LogsTable() {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-bold">
           Leads &amp; partidas ({filtered.length}
-          {query ? ` de ${logs.length}` : ''})
+          {query ? ` de ${logs.length}` : ''} · {uniques.length} únicos)
         </h2>
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative">
@@ -303,8 +326,18 @@ export default function LogsTable() {
             onClick={handleExport}
             disabled={filtered.length === 0}
             className="inline-flex items-center gap-1.5 rounded-full border border-line-light px-4 py-2 text-sm font-semibold hover:bg-chip-light disabled:opacity-40"
+            title="Todas as partidas (uma linha por jogo)"
           >
-            <Download size={15} /> Exportar CSV
+            <Download size={15} /> Exportar partidas
+          </button>
+          <button
+            type="button"
+            onClick={handleExportUnique}
+            disabled={uniques.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-full bg-brand-navy px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-40"
+            title="Uma linha por lead único (dedup por telefone/nome)"
+          >
+            <Download size={15} /> Leads únicos ({uniques.length})
           </button>
           <button
             type="button"

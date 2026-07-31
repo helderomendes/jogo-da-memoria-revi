@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Users, Gamepad2, Trophy, Package } from 'lucide-react'
-import { getGameLogs, getPrizeTiers, getCards } from '../utils/dataStore'
+import { getGameLogs, getPrizeTiers, getCards, leadKey } from '../utils/dataStore'
 import { resolvePrizeIcon } from '../data/prizeIcons'
 
 function StatCard({ icon: Icon, label, value, hint }) {
@@ -30,7 +30,7 @@ export default function Dashboard() {
   const stats = useMemo(() => {
     if (!logs) return null
     const totalGames = logs.length
-    const uniqueLeads = new Set(logs.map((l) => l.phone || l.name)).size
+    const uniqueLeads = new Set(logs.map(leadKey).filter(Boolean)).size
     const winners = logs.filter((l) => l.codigoRetirada).length
     const winRate = totalGames > 0 ? Math.round((winners / totalGames) * 100) : 0
 

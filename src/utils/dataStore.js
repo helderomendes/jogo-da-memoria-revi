@@ -131,6 +131,23 @@ export async function prefetchAllMedia() {
 // adicionar manualmente.
 export const SOURCE_TAG = 'jogo-da-memoria'
 
+// Telefone só com dígitos, sem o código do país (55) na frente — pra o mesmo
+// número não virar dois leads por causa de formatação/DDI.
+export function normalizePhone(raw) {
+  let d = String(raw ?? '').replace(/\D/g, '')
+  if (d.length > 11 && d.startsWith('55')) d = d.slice(2)
+  return d
+}
+
+// Identidade de um lead: telefone normalizado ou, sem telefone, o nome. Usada
+// tanto no contador de "leads únicos" (dashboard) quanto no export de únicos.
+export function leadKey(log) {
+  const phone = normalizePhone(log?.phone)
+  if (phone) return `tel:${phone}`
+  const name = String(log?.name ?? '').trim().toLowerCase()
+  return name ? `nome:${name}` : ''
+}
+
 export function normalizeTags(tags) {
   const list = (Array.isArray(tags) ? tags : String(tags ?? '').split(','))
     .map((t) => t.trim())
@@ -397,16 +414,27 @@ function logToRow(log, { partial = false } = {}) {
   return row
 }
 
+// Busca TODAS as partidas paginando — o PostgREST corta em 1000 linhas por
+// requisição, então sem paginar o painel/CSV truncariam silenciosamente acima
+// de 1000 registros. Percorre em lotes até acabar.
 export async function getGameLogs() {
-  const { data, error } = await supabase
-    .from('game_logs')
-    .select('*')
-    .order('created_at', { ascending: true })
-  if (error) {
-    console.error('[getGameLogs]', error.message)
-    return []
+  const PAGE = 1000
+  const all = []
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from('game_logs')
+      .select('*')
+      .order('created_at', { ascending: true })
+      .range(from, from + PAGE - 1)
+    if (error) {
+      console.error('[getGameLogs]', error.message)
+      break
+    }
+    const batch = data ?? []
+    all.push(...batch)
+    if (batch.length < PAGE) break // último lote
   }
-  return (data ?? []).map(rowToLog)
+  return all.map(rowToLog)
 }
 
 // Registro automático pelo totem no fim da partida. Offline (ou em erro), a
