@@ -3,11 +3,11 @@ import Card from './Card'
 // Proporção de cada célula (largura:altura). Cartas levemente "em pé" (5:8)
 // deixam o tabuleiro 4x4 mais alto — assim ele preenche a altura de um totem
 // retrato 9:16 em vez de sobrar faixa vazia em cima e embaixo.
-// No layout horizontal (TV) as cartas ficam "deitadas" (8:5).
-const RATIOS = {
-  portrait: [5, 8],
-  landscape: [8, 5],
-}
+// A proporção da carta é a mesma nos dois formatos, pra as capas (feitas pra
+// carta em pé) nunca ficarem cortadas/deformadas. No horizontal (TV) o que
+// muda é a disposição: menos linhas e mais colunas (ex.: 2 x 8).
+const CARD_W = 5
+const CARD_H = 8
 
 export default function Board({
   cards,
@@ -20,7 +20,6 @@ export default function Board({
   rows,
   orientation = 'portrait',
 }) {
-  const [CARD_W, CARD_H] = RATIOS[orientation] ?? RATIOS.portrait
   const boardRatio = (cols * CARD_W) / (rows * CARD_H)
   return (
     <div

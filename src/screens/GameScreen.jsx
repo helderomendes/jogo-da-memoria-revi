@@ -122,7 +122,7 @@ export default function GameScreen() {
     if (config.prizeMode === 'choice') {
       // Modelo ESCOLHA: atingiu o mínimo e há opção com estoque → o jogador
       // escolhe na tela de prêmio; a partida é gravada depois da escolha.
-      const qualifies = correctPairs >= (config.choiceMinPairs ?? 4)
+      const qualifies = correctPairs >= (config.choiceMinPairs ?? 1)
       const options = qualifies ? availableChoicePrizes(await getPrizeTiers()) : []
       const isWin = options.length > 0
       const log = {
@@ -224,31 +224,32 @@ export default function GameScreen() {
   const flippedForBoard = phase === 'memorize' ? board.map((c) => c.uid) : flippedUids
 
   if (isLandscape) {
-    // Horizontal (TV): placar numa coluna à esquerda, tabuleiro com cartas
-    // "deitadas" ocupando o resto da tela.
+    // Horizontal (TV): placar numa faixa no topo e o tabuleiro em 2 linhas
+    // (ex.: 2 x 8), com as cartas na mesma proporção em pé do totem — as capas
+    // não são cortadas nem deformadas.
+    const landscapeRows = board.length > 8 ? 2 : 1
+    const landscapeCols = Math.ceil(board.length / landscapeRows)
     return (
-      <div className="flex h-full w-full items-stretch gap-[2vw] bg-revi-gradient px-[2.5vw] py-[3vh] text-white">
-        <aside className="flex w-[clamp(220px,18vw,340px)] shrink-0 flex-col justify-between py-[1vh]">
-          <Logo className="h-[clamp(2rem,3.2vw,3.2rem)] self-start" />
-          <div className="flex flex-col gap-[1.4vh]">
-            <HudStat label="Chances" value={`${chancesLeft}/${config.totalChances}`} tone="sky" />
-            <HudStat
-              label="Tempo"
-              value={phase === 'memorize' ? `${config.guessSeconds}s` : `${guessCountdown}s`}
-              tone="sky"
-            />
-            <HudStat label="Pares" value={`${matchedPairIds.length}/${totalPairs}`} tone="lime" />
-          </div>
-          <div className="min-h-[3.5em] text-[clamp(1.4rem,2.2vw,2.4rem)] font-extrabold leading-tight text-lime-400">
+      <div className="flex h-full w-full flex-col gap-[2.5vh] bg-revi-gradient px-[2.5vw] py-[3vh] text-white">
+        <header className="flex shrink-0 items-center gap-[1.5vw]">
+          <Logo className="h-[clamp(2rem,3.2vw,3.2rem)]" />
+          <div className="flex-1 text-center text-[clamp(1.4rem,2.2vw,2.6rem)] font-extrabold text-lime-400">
             {phase === 'memorize' ? `Memorize! ${memorizeCountdown}s` : ''}
           </div>
-        </aside>
+          <HudStat label="Chances" value={`${chancesLeft}/${config.totalChances}`} tone="sky" />
+          <HudStat
+            label="Tempo"
+            value={phase === 'memorize' ? `${config.guessSeconds}s` : `${guessCountdown}s`}
+            tone="sky"
+          />
+          <HudStat label="Pares" value={`${matchedPairIds.length}/${totalPairs}`} tone="lime" />
+        </header>
 
-        <div className="min-h-0 min-w-0 flex-1">
+        <div className="min-h-0 w-full flex-1">
           <Board
             cards={board}
-            cols={config.boardCols}
-            rows={config.boardRows}
+            cols={landscapeCols}
+            rows={landscapeRows}
             orientation="landscape"
             flippedUids={flippedForBoard}
             matchedPairIds={matchedPairIds}
@@ -295,15 +296,15 @@ export default function GameScreen() {
   )
 }
 
-// Placar grande da coluna lateral (layout horizontal) — legível à distância.
+// Placar grande da faixa superior (layout horizontal) — legível à distância.
 function HudStat({ label, value, tone }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/6 px-[1.2vw] py-[1.4vh]">
+    <div className="min-w-[clamp(140px,11vw,220px)] rounded-2xl border border-white/10 bg-white/6 px-[1.2vw] py-[1.2vh]">
       <p className="text-[clamp(0.8rem,1vw,1.1rem)] font-semibold uppercase tracking-[0.18em] text-ink-300">
         {label}
       </p>
       <p
-        className={`text-[clamp(2rem,3.6vw,4rem)] font-extrabold leading-none tracking-tight ${
+        className={`text-[clamp(1.8rem,3vw,3.4rem)] font-extrabold leading-none tracking-tight ${
           tone === 'lime' ? 'text-lime-400' : 'text-sky-400'
         }`}
       >

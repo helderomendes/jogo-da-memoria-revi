@@ -172,7 +172,7 @@ function PrizeModePicker({ config, tiers, onActivate, onMinPairs }) {
                   type="number"
                   min={1}
                   max={12}
-                  value={config.choiceMinPairs ?? 4}
+                  value={config.choiceMinPairs ?? 1}
                   onChange={(e) => onMinPairs(Number(e.target.value))}
                   className="w-20 rounded-md border border-line-light px-3 py-1.5 text-center"
                 />
@@ -323,7 +323,7 @@ export default function PrizesEditor() {
         <p className="text-sm text-ink-dim">
           {view === 'wheel'
             ? '"Pares certos" define a faixa. Vários brindes na mesma faixa? O jogo sorteia um (peso pelo estoque). Esgotou a faixa, entrega a de baixo que ainda tenha brinde.'
-            : `Quem fechar ${config.choiceMinPairs ?? 4}+ pares escolhe um dos brindes ativos abaixo. Esgotou, a opção some da tela.`}
+            : `Quem fechar ${config.choiceMinPairs ?? 1}+ ${(config.choiceMinPairs ?? 1) === 1 ? 'par' : 'pares'} escolhe um dos brindes ativos abaixo. Esgotou, a opção some da tela.`}
         </p>
       </div>
 

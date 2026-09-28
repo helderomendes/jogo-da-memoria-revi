@@ -39,10 +39,10 @@ export default function InstructionsScreen() {
   const choiceLabels = availableChoicePrizes(tiers).map((t) => t.label)
   const prizeTitle =
     config.prizeMode === 'choice'
-      ? `Feche ${minWin} pares ou mais e escolha seu prêmio${
+      ? `${winCondition(minWin)} e escolha seu prêmio${
           choiceLabels.length ? `: ${formatList(choiceLabels)}` : ''
         }!`
-      : `Feche ${minWin} pares ou mais e ganhe um brinde surpresa!`
+      : `${winCondition(minWin)} e ganhe um brinde surpresa!`
 
   const rules = (
     <>
@@ -107,6 +107,11 @@ export default function InstructionsScreen() {
       {button}
     </KioskScreen>
   )
+}
+
+// "Feche 1 par ou mais" / "Feche 4 pares ou mais"
+function winCondition(n) {
+  return `Feche ${n} ${n === 1 ? 'par' : 'pares'} ou mais`
 }
 
 function formatList(items) {

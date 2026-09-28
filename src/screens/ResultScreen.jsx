@@ -25,7 +25,7 @@ export default function ResultScreen() {
   if (!isWin) {
     const message =
       correctPairs > 0
-        ? `Você fechou ${correctPairs} ${correctPairs === 1 ? 'par' : 'pares'}. Feche ${minWinPairs} ou mais pra ${
+        ? `Você fechou ${correctPairs} ${correctPairs === 1 ? 'par' : 'pares'}. Feche ${minWinPairs} ${minWinPairs === 1 ? 'par' : 'pares'} ou mais pra ${
             isChoice ? 'escolher seu prêmio' : 'ganhar um brinde surpresa'
           }!`
         : `Você usou suas ${totalChances ?? 6} chances e não fechou nenhum par dessa vez.`

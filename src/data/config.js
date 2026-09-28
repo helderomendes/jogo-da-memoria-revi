@@ -29,7 +29,8 @@ export const DEFAULT_GAME_CONFIG = {
   // 'choice' = escolha: quem atinge o mínimo escolhe 1 entre os brindes do modelo.
   prizeMode: 'choice',
   // Mínimo de pares certos pra poder escolher um brinde (modelo 'choice').
-  choiceMinPairs: 4,
+  // D2C Summit: 1 par certo ou mais já leva.
+  choiceMinPairs: 1,
 
   // --- Evento ---
   // Nome exibido e usado como "Evento de origem" no export pro HubSpot.

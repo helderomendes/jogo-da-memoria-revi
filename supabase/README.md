@@ -21,6 +21,7 @@ cole e rode, nesta ordem:
 8. `supabase/migrations/0008_prizes_surprise.sql` — (histórico) brinde "Surpresa" por faixa (1 a 6)
 9. `supabase/migrations/0009_prizes_min4.sql` — só 4+ acertos ganham (faixas 4, 5, 6); 1 a 3 não ganham
 10. `supabase/migrations/0010_prize_modes_d2c.sql` — modelos de premiação (roleta × escolha), brindes à escolha do D2C Summit (Gift Card, Massagem, Chopp) e ativa layout horizontal + modelo escolha + tag `d2c-summit`
+11. `supabase/migrations/0011_choice_min1.sql` — no modelo escolha, 1+ par certo já leva o prêmio
 
 ## Modo offline (PWA)
 

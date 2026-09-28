@@ -14,7 +14,7 @@ export function wheelPrizes(tiers) {
 
 // Menor nº de pares que dá brinde no modelo ativo.
 export function minPairsToWin(config, tiers) {
-  if (config?.prizeMode === 'choice') return config.choiceMinPairs ?? 4
+  if (config?.prizeMode === 'choice') return config.choiceMinPairs ?? 1
   const eligible = wheelPrizes(tiers).filter((t) => typeof t.pairs === 'number' && t.pairs > 0)
   return eligible.length ? Math.min(...eligible.map((t) => t.pairs)) : 4
 }

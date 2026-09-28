@@ -109,7 +109,7 @@ update public.game_config
   set data = data || jsonb_build_object(
         'layout', 'landscape',
         'prizeMode', 'choice',
-        'choiceMinPairs', 4,
+        'choiceMinPairs', 1,
         'eventName', 'D2C Summit',
         'eventTag', 'd2c-summit'
       ),

@@ -82,7 +82,7 @@ export default function Dashboard() {
           value={activeMode.label}
           hint={
             activeMode.id === 'choice'
-              ? `${config.choiceMinPairs ?? 4}+ pares escolhem: ${activeTiers.filter((t) => t.enabled !== false).map((t) => t.label).join(', ')}`
+              ? `${config.choiceMinPairs ?? 1}+ ${(config.choiceMinPairs ?? 1) === 1 ? 'par' : 'pares'} escolhem: ${activeTiers.filter((t) => t.enabled !== false).map((t) => t.label).join(', ')}`
               : 'brinde sorteado por faixa de acertos'
           }
         />
