@@ -3,7 +3,6 @@ import { KioskProvider, SCREENS, useKiosk } from './context/KioskContext'
 import { getGameConfig } from './utils/dataStore'
 import { useIdleTimer } from './utils/useIdleTimer'
 import { useOfflineSync } from './utils/useOfflineSync'
-import OfflineBadge from './components/OfflineBadge'
 import VersionBadge from './components/VersionBadge'
 import IdleScreen from './screens/IdleScreen'
 import RegisterScreen from './screens/RegisterScreen'
@@ -28,7 +27,8 @@ const SCREEN_COMPONENTS = {
 function KioskFlow() {
   const { screen, resetToIdle, paused, setPaused } = useKiosk()
   const [idleTimeoutMs, setIdleTimeoutMs] = useState(null)
-  const { online, pending } = useOfflineSync()
+  // Sincronização offline roda só em background — nada aparece pro jogador.
+  useOfflineSync()
 
   useEffect(() => {
     getGameConfig().then((cfg) => setIdleTimeoutMs(cfg.idleTimeoutMs))
@@ -51,7 +51,6 @@ function KioskFlow() {
 
   return (
     <div className="fixed inset-0 overflow-y-auto bg-revi-gradient transition-opacity duration-300">
-      <OfflineBadge online={online} pending={pending} />
       <VersionBadge />
       {paused ? (
         <PauseScreen />
