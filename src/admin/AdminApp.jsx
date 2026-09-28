@@ -14,8 +14,8 @@ import { versionLabel } from '../components/VersionBadge'
 const TABS = [
   { id: 'dashboard', label: 'Visão geral' },
   { id: 'cards', label: 'Cartas' },
-  { id: 'prizes', label: 'Brindes & estoque' },
-  { id: 'config', label: 'Configurações' },
+  { id: 'prizes', label: 'Premiação & estoque' },
+  { id: 'config', label: 'Evento & configurações' },
   { id: 'leads', label: 'Leads' },
 ]
 
@@ -82,7 +82,7 @@ export default function AdminApp() {
         ))}
       </nav>
 
-      <main className="mx-auto max-w-5xl p-6">
+      <main className="mx-auto max-w-[1760px] p-6 lg:px-10">
         {tab === 'dashboard' && <Dashboard />}
         {tab === 'cards' && <CardsEditor />}
         {tab === 'prizes' && <PrizesEditor />}

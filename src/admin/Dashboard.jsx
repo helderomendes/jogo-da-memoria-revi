@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Users, Gamepad2, Trophy, Package } from 'lucide-react'
-import { getGameLogs, getPrizeTiers, getCards, leadKey } from '../utils/dataStore'
+import { Users, Gamepad2, Trophy, Package, Tv, MonitorSmartphone, Dices, Hand, Tag } from 'lucide-react'
+import { getGameLogs, getPrizeTiers, getCards, getGameConfig, leadKey } from '../utils/dataStore'
+import { PRIZE_MODES } from '../data/config'
+import { tierMode } from '../data/prizes'
 import { resolvePrizeIcon } from '../data/prizeIcons'
 
 function StatCard({ icon: Icon, label, value, hint }) {
@@ -20,8 +22,10 @@ export default function Dashboard() {
   const [logs, setLogs] = useState(null)
   const [tiers, setTiers] = useState(null)
   const [cards, setCards] = useState(null)
+  const [config, setConfig] = useState(null)
 
   useEffect(() => {
+    getGameConfig().then(setConfig)
     getGameLogs().then(setLogs)
     getPrizeTiers().then(setTiers)
     getCards().then(setCards)
@@ -42,16 +46,48 @@ export default function Dashboard() {
     return { totalGames, uniqueLeads, winners, winRate, prizeCounts }
   }, [logs])
 
-  if (!logs || !tiers || !cards || !stats) return <p>Carregando...</p>
+  if (!logs || !tiers || !cards || !stats || !config) return <p>Carregando...</p>
 
-  const totalStockInitial = tiers.reduce((s, t) => s + (t.stockInitial || 0), 0)
-  const totalStockLeft = tiers.reduce(
+  const activeMode = PRIZE_MODES.find((m) => m.id === config.prizeMode) ?? PRIZE_MODES[0]
+  const activeTiers = tiers.filter((t) => tierMode(t) === activeMode.id)
+  const eventLeads = config.eventTag
+    ? new Set(logs.filter((l) => (l.tags ?? []).includes(config.eventTag)).map(leadKey).filter(Boolean)).size
+    : 0
+
+  const totalStockInitial = activeTiers.reduce((s, t) => s + (t.stockInitial || 0), 0)
+  const totalStockLeft = activeTiers.reduce(
     (s, t) => s + (typeof t.stock === 'number' ? t.stock : 0),
     0,
   )
 
   return (
     <div className="space-y-6">
+      {/* Setup ativo no totem: evento, formato e modelo de premiação */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <StatCard
+          icon={Tag}
+          label="Evento atual"
+          value={config.eventName || '—'}
+          hint={config.eventTag ? `${eventLeads} leads únicos com a tag ${config.eventTag}` : 'sem tag de evento'}
+        />
+        <StatCard
+          icon={config.layout === 'portrait' ? MonitorSmartphone : Tv}
+          label="Formato da tela"
+          value={config.layout === 'portrait' ? 'Vertical' : 'Horizontal'}
+          hint={config.layout === 'portrait' ? 'totem em pé' : 'TV / monitor deitado'}
+        />
+        <StatCard
+          icon={activeMode.id === 'choice' ? Hand : Dices}
+          label="Modelo de premiação"
+          value={activeMode.label}
+          hint={
+            activeMode.id === 'choice'
+              ? `${config.choiceMinPairs ?? 4}+ pares escolhem: ${activeTiers.filter((t) => t.enabled !== false).map((t) => t.label).join(', ')}`
+              : 'brinde sorteado por faixa de acertos'
+          }
+        />
+      </div>
+
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard icon={Gamepad2} label="Partidas jogadas" value={stats.totalGames} />
         <StatCard icon={Users} label="Leads únicos" value={stats.uniqueLeads} hint="por telefone/nome" />
@@ -65,16 +101,16 @@ export default function Dashboard() {
           icon={Package}
           label="Estoque restante"
           value={totalStockLeft}
-          hint={`de ${totalStockInitial} cadastrados`}
+          hint={`de ${totalStockInitial} cadastrados (modelo ativo)`}
         />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Estoque por brinde */}
         <div className="rounded-xl border border-line-light bg-card-light p-5">
-          <h3 className="mb-4 text-base font-bold">Estoque por brinde</h3>
+          <h3 className="mb-4 text-base font-bold">Estoque por brinde · {activeMode.label}</h3>
           <div className="space-y-4">
-            {tiers.map((tier) => {
+            {activeTiers.map((tier) => {
               const Icon = resolvePrizeIcon(tier.icon)
               const initial = tier.stockInitial || 0
               const isUnlimited = typeof tier.stock !== 'number'

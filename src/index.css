@@ -229,6 +229,27 @@
   }
 }
 
+/* Roda do layout horizontal: centrada verticalmente (translateY) em vez de
+   horizontalmente. */
+@keyframes wheelSpinY {
+  from {
+    transform: translateY(-50%) rotate(0deg);
+  }
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+/* Contra-giro da carta: cancela a rotação da roda pra carta ficar sempre em pé. */
+@keyframes counterSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
 /* Profundidade sincronizada com o giro: a carta cresce e fica opaca no topo
    (à frente) e encolhe/transparece ao descer (ao fundo). O atraso por carta
    alinha o pico ao momento em que ela passa pelo ponto mais alto da roda. */

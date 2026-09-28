@@ -3,23 +3,20 @@ import { Eye, Gift, Target, Timer } from 'lucide-react'
 import { useKiosk } from '../context/KioskContext'
 import { getCards, getGameConfig, getPairHistory, pushPairHistory, getPrizeTiers } from '../utils/dataStore'
 import { selectPairsForNewGame } from '../utils/gameEngine'
+import { availableChoicePrizes, minPairsToWin } from '../utils/prizeModes'
 import Button from '../components/Button'
-import KioskScreen from '../components/KioskScreen'
+import KioskScreen, { LandscapeAside, LandscapeLead } from '../components/KioskScreen'
 import RuleCard from '../components/RuleCard'
 
 export default function InstructionsScreen() {
-  const { session, startGame } = useKiosk()
+  const { session, startGame, isLandscape } = useKiosk()
   const [config, setConfig] = useState(null)
-  const [minWinPairs, setMinWinPairs] = useState(null)
+  const [tiers, setTiers] = useState(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     getGameConfig().then(setConfig)
-    // Menor número de pares que dá brinde (menor `pairs` entre as faixas ativas).
-    getPrizeTiers().then((tiers) => {
-      const enabled = tiers.filter((t) => t.enabled !== false && typeof t.pairs === 'number' && t.pairs > 0)
-      if (enabled.length) setMinWinPairs(Math.min(...enabled.map((t) => t.pairs)))
-    })
+    getPrizeTiers().then(setTiers)
   }, [])
 
   const handleStart = async () => {
@@ -38,42 +35,81 @@ export default function InstructionsScreen() {
 
   if (!config) return null
 
+  const minWin = minPairsToWin(config, tiers ?? [])
+  const choiceLabels = availableChoicePrizes(tiers).map((t) => t.label)
+  const prizeTitle =
+    config.prizeMode === 'choice'
+      ? `Feche ${minWin} pares ou mais e escolha seu prêmio${
+          choiceLabels.length ? `: ${formatList(choiceLabels)}` : ''
+        }!`
+      : `Feche ${minWin} pares ou mais e ganhe um brinde surpresa!`
+
+  const rules = (
+    <>
+      <RuleCard
+        icon={Eye}
+        tone="limeSoft"
+        overline="Memorize"
+        title={`${config.memorizeSeconds} segundos com as cartas viradas`}
+        large={isLandscape}
+      />
+      <RuleCard
+        icon={Target}
+        tone="sky"
+        overline="Chances"
+        title={`${config.totalChances} tentativas pra formar pares`}
+        large={isLandscape}
+      />
+      <RuleCard
+        icon={Timer}
+        tone="sky"
+        overline="Cronômetro"
+        title={`${config.guessSeconds} segundos de relógio — o que acabar primeiro encerra`}
+        large={isLandscape}
+      />
+      <RuleCard icon={Gift} tone="limeSoft" overline="Prêmio" title={prizeTitle} large={isLandscape} />
+    </>
+  )
+
+  const button = (
+    <Button onClick={handleStart} disabled={loading} className="w-full">
+      {loading ? 'Preparando...' : 'Entendi, vamos lá'}
+    </Button>
+  )
+
+  if (isLandscape) {
+    return (
+      <KioskScreen>
+        <LandscapeLead className="max-w-[36%]">
+          <h1 className="text-[clamp(3rem,5.4vw,6.4rem)] font-extrabold leading-[0.95] tracking-tight">
+            Oi, <span className="text-lime-400">{session.name.split(' ')[0]}</span>!
+          </h1>
+          <p className="text-[clamp(1.3rem,2vw,2.4rem)] font-bold leading-tight text-ink-100">
+            Olha as regras e bora jogar.
+          </p>
+          {button}
+        </LandscapeLead>
+        <LandscapeAside>
+          <div className="grid grid-cols-2 gap-[2vh]">{rules}</div>
+        </LandscapeAside>
+      </KioskScreen>
+    )
+  }
+
   return (
     <KioskScreen>
       <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
         Oi, <span className="text-lime-400">{session.name.split(' ')[0]}</span>!
       </h1>
 
-      <div className="w-full space-y-3">
-        <RuleCard
-          icon={Eye}
-          tone="limeSoft"
-          overline="Memorize"
-          title={`${config.memorizeSeconds} segundos com as cartas viradas`}
-        />
-        <RuleCard
-          icon={Target}
-          tone="sky"
-          overline="Chances"
-          title={`${config.totalChances} tentativas pra formar pares`}
-        />
-        <RuleCard
-          icon={Timer}
-          tone="sky"
-          overline="Cronômetro"
-          title={`${config.guessSeconds} segundos de relógio — o que acabar primeiro encerra`}
-        />
-        <RuleCard
-          icon={Gift}
-          tone="limeSoft"
-          overline="Prêmio"
-          title={`Feche ${minWinPairs ?? 4} pares ou mais e ganhe um brinde surpresa!`}
-        />
-      </div>
+      <div className="w-full space-y-3">{rules}</div>
 
-      <Button onClick={handleStart} disabled={loading} className="w-full">
-        {loading ? 'Preparando...' : 'Entendi, vamos lá'}
-      </Button>
+      {button}
     </KioskScreen>
   )
+}
+
+function formatList(items) {
+  if (items.length <= 1) return items.join('')
+  return `${items.slice(0, -1).join(', ')} ou ${items[items.length - 1]}`
 }

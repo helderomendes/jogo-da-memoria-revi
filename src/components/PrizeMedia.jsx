@@ -19,7 +19,8 @@ export default function PrizeMedia({ tier, size = 96, tone = 'lime', className =
       {tier?.image ? (
         <img src={tier.image} alt={tier.label ?? ''} decoding="async" className="h-full w-full object-cover" />
       ) : (
-        <Icon size={size * 0.46} strokeWidth={1.75} className="text-lime-400" />
+        // `size` pode ser número (px) ou CSS (ex.: clamp()); o ícone acompanha em %.
+        <Icon strokeWidth={1.75} className="h-[46%] w-[46%] text-lime-400" />
       )}
     </div>
   )

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, Download, Trash2, Plus, Pencil, X } from 'lucide-react'
+import { Search, Download, Trash2, Plus, Pencil, X, Users, Gamepad2, Trophy, Tag } from 'lucide-react'
 import {
   getGameLogs,
   clearGameLogs,
@@ -8,6 +8,8 @@ import {
   deleteGameLog,
   normalizeTags,
   leadKey,
+  normalizePhone,
+  getGameConfig,
   SOURCE_TAG,
 } from '../utils/dataStore'
 
@@ -16,6 +18,7 @@ const COLUMNS = [
   { key: 'name', label: 'Nome' },
   { key: 'phone', label: 'Telefone' },
   { key: 'company', label: 'Empresa/site' },
+  { key: 'evento', label: 'Evento' },
   { key: 'chancesUsadas', label: 'Chances usadas' },
   { key: 'paresCertos', label: 'Pares certos' },
   { key: 'premioGanho', label: 'Prêmio' },
@@ -40,6 +43,78 @@ function logsToCSV(logs) {
     }).join(','),
   )
   return [header, ...rows].join('\n')
+}
+
+// Evento de origem do lead: tags que não são a tag fixa do jogo. A tag do evento
+// configurado vira o nome bonito (ex.: d2c-summit → "D2C Summit").
+function eventTagsOf(log) {
+  return (log.tags ?? []).filter((t) => t !== SOURCE_TAG)
+}
+
+function eventLabel(tag, config) {
+  if (config?.eventTag && tag === config.eventTag) return config.eventName || tag
+  return tag
+}
+
+function withEvent(log, config) {
+  const tags = eventTagsOf(log)
+  const evTag = config?.eventTag && tags.includes(config.eventTag) ? config.eventTag : tags[0]
+  return { ...log, evento: evTag ? eventLabel(evTag, config) : '' }
+}
+
+// CSV pronto pro import de contatos do HubSpot: nome separado, telefone em
+// E.164 (+55...) e as colunas de origem. No import, mapeie "Evento de origem"
+// pra uma propriedade de contato (ex.: uma propriedade "Evento de origem") e/ou
+// adicione os contatos a uma lista do evento.
+const HUBSPOT_COLUMNS = [
+  'First Name',
+  'Last Name',
+  'Phone Number',
+  'Company Name',
+  'Evento de origem',
+  'Origem do lead',
+  'Tags',
+  'Prêmio',
+  'Código de retirada',
+  'Data da partida',
+]
+
+function logsToHubSpotCSV(logs) {
+  const rows = logs.map((log) => {
+    const [first, ...rest] = String(log.name ?? '').trim().split(/\s+/)
+    const digits = normalizePhone(log.phone)
+    return [
+      first ?? '',
+      rest.join(' '),
+      digits ? `+55${digits}` : '',
+      log.company ?? '',
+      log.evento ?? '',
+      log.evento ? `Evento presencial — ${log.evento} (Jogo da Memória Revi)` : 'Jogo da Memória Revi',
+      (log.tags ?? []).join(';'),
+      log.premioGanho ?? '',
+      log.codigoRetirada ?? '',
+      log.timestamp ? new Date(log.timestamp).toISOString() : '',
+    ]
+      .map(csvEscape)
+      .join(',')
+  })
+  // BOM: acentos corretos no Excel e no importador do HubSpot.
+  return '\uFEFF' + [HUBSPOT_COLUMNS.join(','), ...rows].join('\n')
+}
+
+function KpiCard({ icon: Icon, label, value, hint }) {
+  return (
+    <div className="flex items-center gap-4 rounded-xl border border-line-light bg-card-light px-5 py-4">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-chip-light text-brand-navy">
+        <Icon size={20} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-dim">{label}</p>
+        <p className="text-2xl font-extrabold leading-tight text-ink-strong">{value}</p>
+        {hint && <p className="truncate text-xs text-ink-dim">{hint}</p>}
+      </div>
+    </div>
+  )
 }
 
 // Um registro por lead único. Recebe a lista já ordenada (mais recente primeiro)
@@ -115,7 +190,7 @@ function LeadModal({ initial, onClose, onSave }) {
           // Mostra as tags editáveis SEM a de origem — ela é reaplicada ao salvar.
           tags: (initial.tags ?? []).filter((t) => t !== SOURCE_TAG).join(', '),
         }
-      : { ...EMPTY_FORM, timestamp: toDatetimeLocal() },
+      : { ...EMPTY_FORM, timestamp: toDatetimeLocal(), tags: (initial?.tags ?? []).join(', ') },
   )
   const [saving, setSaving] = useState(false)
 
@@ -244,36 +319,65 @@ function LeadModal({ initial, onClose, onSave }) {
 
 export default function LogsTable() {
   const [logs, setLogs] = useState(null)
+  const [config, setConfig] = useState(null)
   const [query, setQuery] = useState('')
+  const [eventFilter, setEventFilter] = useState('all') // 'all' | tag | '__none__'
   const [editing, setEditing] = useState(null) // {} = novo, {id,...} = edição, null = fechado
 
   useEffect(() => {
     getGameLogs().then((data) => setLogs([...data].reverse()))
+    getGameConfig().then(setConfig)
   }, [])
 
+  const enriched = useMemo(() => (logs ?? []).map((l) => withEvent(l, config)), [logs, config])
+
+  // Eventos presentes na base (tags de origem), com contagem — viram filtros.
+  const events = useMemo(() => {
+    const counts = new Map()
+    let none = 0
+    for (const log of enriched) {
+      const tags = eventTagsOf(log)
+      if (!tags.length) none += 1
+      for (const t of tags) counts.set(t, (counts.get(t) ?? 0) + 1)
+    }
+    const list = [...counts.entries()].sort((a, b) => {
+      if (a[0] === config?.eventTag) return -1
+      if (b[0] === config?.eventTag) return 1
+      return b[1] - a[1]
+    })
+    return { list, none }
+  }, [enriched, config])
+
   const filtered = useMemo(() => {
-    if (!logs) return []
     const q = query.trim().toLowerCase()
-    if (!q) return logs
-    return logs.filter((log) =>
-      [log.name, log.phone, log.company, log.premioGanho, log.codigoRetirada, ...(log.tags ?? [])]
+    return enriched.filter((log) => {
+      if (eventFilter === '__none__' && eventTagsOf(log).length) return false
+      if (eventFilter !== 'all' && eventFilter !== '__none__' && !(log.tags ?? []).includes(eventFilter)) return false
+      if (!q) return true
+      return [log.name, log.phone, log.company, log.premioGanho, log.codigoRetirada, log.evento, ...(log.tags ?? [])]
         .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q)),
-    )
-  }, [logs, query])
+        .some((v) => String(v).toLowerCase().includes(q))
+    })
+  }, [enriched, query, eventFilter])
 
   const uniques = useMemo(() => uniqueLeads(filtered), [filtered])
 
   if (!logs) return <p>Carregando...</p>
 
   const today = new Date().toISOString().slice(0, 10)
+  const scope = eventFilter === 'all' ? 'todos' : eventFilter === '__none__' ? 'sem-evento' : eventFilter
+  const winners = filtered.filter((l) => l.codigoRetirada).length
 
   const handleExport = () => {
-    downloadCSV(logsToCSV(filtered), `revi-memoria-partidas-${today}.csv`)
+    downloadCSV(logsToCSV(filtered), `revi-memoria-partidas-${scope}-${today}.csv`)
   }
 
   const handleExportUnique = () => {
-    downloadCSV(logsToCSV(uniques), `revi-memoria-leads-unicos-${today}.csv`)
+    downloadCSV(logsToCSV(uniques), `revi-memoria-leads-unicos-${scope}-${today}.csv`)
+  }
+
+  const handleExportHubSpot = () => {
+    downloadCSV(logsToHubSpotCSV(uniques), `hubspot-leads-${scope}-${today}.csv`)
   }
 
   const handleClear = async () => {
@@ -297,27 +401,66 @@ export default function LogsTable() {
     setEditing(null)
   }
 
+  const chipCls = (active) =>
+    `inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
+      active ? 'bg-brand-navy text-white' : 'border border-line-light bg-card-light text-ink-medium hover:bg-chip-light'
+    }`
+
+  const scopeLabel =
+    eventFilter === 'all' ? 'todos os eventos' : eventFilter === '__none__' ? 'sem evento' : eventLabel(eventFilter, config)
+
   return (
-    <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-bold">
-          Leads &amp; partidas ({filtered.length}
-          {query ? ` de ${logs.length}` : ''} · {uniques.length} únicos)
-        </h2>
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative">
+    <div className="space-y-5">
+      {/* KPIs do recorte atual — lado a lado */}
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <KpiCard icon={Gamepad2} label="Partidas" value={filtered.length} hint={scopeLabel} />
+        <KpiCard icon={Users} label="Leads únicos" value={uniques.length} hint="por telefone/nome" />
+        <KpiCard icon={Trophy} label="Com prêmio" value={winners} hint="com código de retirada" />
+        <KpiCard
+          icon={Tag}
+          label="Evento atual"
+          value={config?.eventName || '—'}
+          hint={config?.eventTag ? `tag: ${config.eventTag}` : 'sem tag configurada'}
+        />
+      </div>
+
+      {/* Filtros à esquerda, ações à direita */}
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-line-light bg-card-light p-4">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+          <div className="relative mr-2">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-ink-dim" />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar nome, telefone, prêmio, tag..."
-              className="w-64 rounded-full border border-line-light bg-card-light py-2 pl-9 pr-4 text-sm"
+              className="w-72 rounded-full border border-line-light bg-page-light py-2 pl-9 pr-4 text-sm"
             />
           </div>
+          <span className="text-xs font-semibold uppercase tracking-wide text-ink-dim">Evento:</span>
+          <button type="button" onClick={() => setEventFilter('all')} className={chipCls(eventFilter === 'all')}>
+            Todos ({logs.length})
+          </button>
+          {events.list.map(([tag, count]) => (
+            <button key={tag} type="button" onClick={() => setEventFilter(tag)} className={chipCls(eventFilter === tag)}>
+              {eventLabel(tag, config)} ({count})
+            </button>
+          ))}
+          {events.none > 0 && (
+            <button
+              type="button"
+              onClick={() => setEventFilter('__none__')}
+              className={chipCls(eventFilter === '__none__')}
+            >
+              Sem evento ({events.none})
+            </button>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => setEditing({})}
-            className="inline-flex items-center gap-1.5 rounded-full bg-brand-navy px-4 py-2 text-sm font-semibold text-white hover:brightness-110"
+            className="inline-flex items-center gap-1.5 rounded-full border border-line-light px-4 py-2 text-sm font-semibold hover:bg-chip-light"
           >
             <Plus size={15} /> Novo lead
           </button>
@@ -326,18 +469,27 @@ export default function LogsTable() {
             onClick={handleExport}
             disabled={filtered.length === 0}
             className="inline-flex items-center gap-1.5 rounded-full border border-line-light px-4 py-2 text-sm font-semibold hover:bg-chip-light disabled:opacity-40"
-            title="Todas as partidas (uma linha por jogo)"
+            title="Todas as partidas do recorte (uma linha por jogo)"
           >
-            <Download size={15} /> Exportar partidas
+            <Download size={15} /> Partidas
           </button>
           <button
             type="button"
             onClick={handleExportUnique}
             disabled={uniques.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-full bg-brand-navy px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-full border border-line-light px-4 py-2 text-sm font-semibold hover:bg-chip-light disabled:opacity-40"
             title="Uma linha por lead único (dedup por telefone/nome)"
           >
             <Download size={15} /> Leads únicos ({uniques.length})
+          </button>
+          <button
+            type="button"
+            onClick={handleExportHubSpot}
+            disabled={uniques.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#ff7a59] px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-40"
+            title="CSV de contatos pro import do HubSpot, com a coluna Evento de origem"
+          >
+            <Download size={15} /> Exportar p/ HubSpot
           </button>
           <button
             type="button"
@@ -350,31 +502,32 @@ export default function LogsTable() {
         </div>
       </div>
 
-      <div className="overflow-auto rounded-lg border border-line-light bg-card-light">
+      <div className="max-h-[70vh] overflow-auto rounded-xl border border-line-light bg-card-light">
         <table className="w-full text-sm">
-          <thead className="bg-chip-light text-left text-ink-dim">
+          <thead className="sticky top-0 z-10 bg-chip-light text-left text-ink-dim">
             <tr>
               {COLUMNS.map((c) => (
-                <th key={c.key} className="whitespace-nowrap px-4 py-2">
+                <th key={c.key} className="whitespace-nowrap px-4 py-3 font-semibold">
                   {c.label}
                 </th>
               ))}
-              <th className="whitespace-nowrap px-4 py-2 text-right">Ações</th>
+              <th className="whitespace-nowrap px-4 py-3 text-right font-semibold">Ações</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((log) => (
-              <tr key={log.id} className="border-t border-line-light">
+              <tr key={log.id} className="border-t border-line-light hover:bg-page-light">
                 <td className="px-4 py-2 whitespace-nowrap">
                   {new Date(log.timestamp).toLocaleString('pt-BR')}
                 </td>
-                <td className="px-4 py-2">{log.name}</td>
-                <td className="px-4 py-2">{log.phone ?? '-'}</td>
+                <td className="px-4 py-2 font-semibold">{log.name}</td>
+                <td className="px-4 py-2 whitespace-nowrap">{log.phone ?? '-'}</td>
                 <td className="px-4 py-2">{log.company ?? '-'}</td>
-                <td className="px-4 py-2">{log.chancesUsadas ?? '-'}</td>
-                <td className="px-4 py-2">{log.paresCertos ?? '-'}</td>
-                <td className="px-4 py-2">{log.premioGanho ?? '-'}</td>
-                <td className="px-4 py-2">{log.codigoRetirada ?? '-'}</td>
+                <td className="px-4 py-2 whitespace-nowrap">{log.evento || '-'}</td>
+                <td className="px-4 py-2 text-center">{log.chancesUsadas ?? '-'}</td>
+                <td className="px-4 py-2 text-center">{log.paresCertos ?? '-'}</td>
+                <td className="px-4 py-2 whitespace-nowrap">{log.premioGanho ?? '-'}</td>
+                <td className="px-4 py-2 font-mono">{log.codigoRetirada ?? '-'}</td>
                 <td className="px-4 py-2">
                   <TagPills tags={log.tags} />
                 </td>
@@ -403,7 +556,7 @@ export default function LogsTable() {
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={COLUMNS.length + 1} className="px-4 py-6 text-center text-ink-dim">
-                  {logs.length === 0 ? 'Nenhuma partida registrada ainda.' : 'Nenhum resultado para a busca.'}
+                  {logs.length === 0 ? 'Nenhuma partida registrada ainda.' : 'Nenhum resultado para o filtro.'}
                 </td>
               </tr>
             )}
@@ -412,7 +565,11 @@ export default function LogsTable() {
       </div>
 
       {editing !== null && (
-        <LeadModal initial={editing} onClose={() => setEditing(null)} onSave={handleSaved} />
+        <LeadModal
+          initial={editing.id ? editing : { tags: config?.eventTag ? [config.eventTag] : [] }}
+          onClose={() => setEditing(null)}
+          onSave={handleSaved}
+        />
       )}
     </div>
   )

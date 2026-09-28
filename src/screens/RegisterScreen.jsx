@@ -53,7 +53,7 @@ function Field({ field, active, ...props }) {
 }
 
 export default function RegisterScreen() {
-  const { submitRegistration, resetToIdle } = useKiosk()
+  const { submitRegistration, resetToIdle, isLandscape } = useKiosk()
   const [name, setName] = useState('')
   const [company, setCompany] = useState('')
   const [phoneDigits, setPhoneDigits] = useState('')
@@ -74,6 +74,95 @@ export default function RegisterScreen() {
 
   const preventKeyboardFocusSteal = (e) => e.preventDefault()
 
+  const fields = (
+    <>
+      <Field
+        field="name"
+        active={activeField === 'name'}
+        value={name}
+        onChange={(e) => setName(e.target.value.slice(0, 40))}
+        onFocus={() => setActiveField('name')}
+        placeholder="Seu nome *"
+        maxLength={40}
+      />
+
+      <Field
+        field="phone"
+        active={activeField === 'phone'}
+        value={phone}
+        onChange={(e) => setPhoneDigits(e.target.value.replace(/\D/g, '').slice(0, 11))}
+        onFocus={() => setActiveField('phone')}
+        type="tel"
+        inputMode="numeric"
+        placeholder="WhatsApp *"
+      />
+
+      <Field
+        field="company"
+        active={activeField === 'company'}
+        value={company}
+        onChange={(e) => setCompany(e.target.value.slice(0, 60))}
+        onFocus={() => setActiveField('company')}
+        placeholder="Empresa / site *"
+        maxLength={60}
+      />
+
+      <label className="flex items-start gap-4 pt-2 text-base text-ink-200">
+        <input
+          type="checkbox"
+          checked={termsAccepted}
+          onChange={(e) => setTermsAccepted(e.target.checked)}
+          className="mt-1 h-7 w-7 accent-lime-400 shrink-0"
+        />
+        Autorizo receber mensagens e compartilhar meu contato com a Revi. *
+      </label>
+    </>
+  )
+
+  const keyboard =
+    activeField === 'phone' ? (
+      <NumericKeypad
+        large={isLandscape}
+        onDigit={(d) => setPhoneDigits((prev) => (prev + d).slice(0, 11))}
+        onBackspace={() => setPhoneDigits((prev) => prev.slice(0, -1))}
+      />
+    ) : activeField === 'company' ? (
+      <VirtualKeyboard value={company} onChange={setCompany} maxLength={60} withSymbols large={isLandscape} />
+    ) : (
+      <VirtualKeyboard value={name} onChange={setName} maxLength={40} large={isLandscape} />
+    )
+
+  if (isLandscape) {
+    // Horizontal (TV): formulário à esquerda, teclado grande à direita.
+    return (
+      <ScreenTransition className="relative flex h-full min-h-full w-full flex-col bg-revi-gradient px-[4vw] py-[5vh] text-white">
+        <BackgroundGlow />
+        <div className="shrink-0">
+          <Logo className="h-[clamp(2rem,3.2vw,3.2rem)]" onClick={resetToIdle} />
+        </div>
+
+        <div className="mx-auto flex w-full max-w-[1760px] flex-1 items-center gap-[4vw]">
+          <div className="flex w-[40%] shrink-0 flex-col gap-[3vh]">
+            <h1 className="text-[clamp(2.2rem,3.6vw,4.4rem)] font-extrabold leading-[1.05] tracking-tight">
+              Antes de jogar, <span className="block text-lime-400">como te chamamos?</span>
+            </h1>
+            <GlassPanel className="w-full space-y-4 p-[clamp(1rem,1.6vw,2rem)]">{fields}</GlassPanel>
+            <Button onClick={handleAdvance} disabled={!canAdvance} className="w-full">
+              Avançar
+            </Button>
+          </div>
+
+          <div
+            className="flex min-w-0 flex-1 flex-col justify-center rounded-[32px] border border-white/8 bg-white/4 p-[clamp(1rem,1.6vw,2rem)]"
+            onMouseDown={preventKeyboardFocusSteal}
+          >
+            {keyboard}
+          </div>
+        </div>
+      </ScreenTransition>
+    )
+  }
+
   return (
     <ScreenTransition className="relative flex min-h-full w-full flex-col items-center bg-revi-gradient px-6 py-10 text-white">
       <BackgroundGlow />
@@ -83,63 +172,13 @@ export default function RegisterScreen() {
         Antes de jogar, <span className="text-lime-400">como te chamamos?</span>
       </h1>
 
-      <GlassPanel className="w-full max-w-xl space-y-4 p-6">
-        <Field
-          field="name"
-          active={activeField === 'name'}
-          value={name}
-          onChange={(e) => setName(e.target.value.slice(0, 40))}
-          onFocus={() => setActiveField('name')}
-          placeholder="Seu nome *"
-          maxLength={40}
-        />
-
-        <Field
-          field="phone"
-          active={activeField === 'phone'}
-          value={phone}
-          onChange={(e) => setPhoneDigits(e.target.value.replace(/\D/g, '').slice(0, 11))}
-          onFocus={() => setActiveField('phone')}
-          type="tel"
-          inputMode="numeric"
-          placeholder="WhatsApp *"
-        />
-
-        <Field
-          field="company"
-          active={activeField === 'company'}
-          value={company}
-          onChange={(e) => setCompany(e.target.value.slice(0, 60))}
-          onFocus={() => setActiveField('company')}
-          placeholder="Empresa / site *"
-          maxLength={60}
-        />
-
-        <label className="flex items-start gap-4 pt-2 text-base text-ink-200">
-          <input
-            type="checkbox"
-            checked={termsAccepted}
-            onChange={(e) => setTermsAccepted(e.target.checked)}
-            className="mt-1 h-7 w-7 accent-lime-400 shrink-0"
-          />
-          Autorizo receber mensagens e compartilhar meu contato com a Revi. *
-        </label>
-      </GlassPanel>
+      <GlassPanel className="w-full max-w-xl space-y-4 p-6">{fields}</GlassPanel>
 
       <div
         className="mt-6 w-full max-w-xl flex-1 flex flex-col justify-center"
         onMouseDown={preventKeyboardFocusSteal}
       >
-        {activeField === 'phone' ? (
-          <NumericKeypad
-            onDigit={(d) => setPhoneDigits((prev) => (prev + d).slice(0, 11))}
-            onBackspace={() => setPhoneDigits((prev) => prev.slice(0, -1))}
-          />
-        ) : activeField === 'company' ? (
-          <VirtualKeyboard value={company} onChange={setCompany} maxLength={60} withSymbols />
-        ) : (
-          <VirtualKeyboard value={name} onChange={setName} maxLength={40} />
-        )}
+        {keyboard}
       </div>
 
       <Button onClick={handleAdvance} disabled={!canAdvance} className="mt-6 w-full max-w-xl">

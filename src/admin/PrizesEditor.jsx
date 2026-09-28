@@ -1,6 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { Plus, Trash2, RotateCcw, Upload, X } from 'lucide-react'
-import { getPrizeTiers, savePrizeTiers, resetPrizeStock, uploadPrizeImage } from '../utils/dataStore'
+import { Plus, Trash2, RotateCcw, Upload, X, Dices, Hand, CheckCircle2 } from 'lucide-react'
+import {
+  getPrizeTiers,
+  savePrizeTiers,
+  resetPrizeStock,
+  uploadPrizeImage,
+  getGameConfig,
+  saveGameConfig,
+} from '../utils/dataStore'
+import { PRIZE_MODES } from '../data/config'
+import { tierMode } from '../data/prizes'
 import { PRIZE_ICON_OPTIONS, DEFAULT_PRIZE_ICON, resolvePrizeIcon } from '../data/prizeIcons'
 
 let nextTempId = 1
@@ -109,18 +118,98 @@ function PrizePhotoField({ tier, onUpdate }) {
   )
 }
 
+const MODE_ICONS = { wheel: Dices, choice: Hand }
+
+// Seletor do modelo de premiação ativo. Os modelos convivem: trocar aqui só
+// muda qual deles o totem usa — os brindes de cada um ficam guardados.
+function PrizeModePicker({ config, tiers, onActivate, onMinPairs }) {
+  return (
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {PRIZE_MODES.map((m) => {
+        const Icon = MODE_ICONS[m.id]
+        const active = config.prizeMode === m.id
+        const count = tiers.filter((t) => tierMode(t) === m.id && t.enabled !== false).length
+        return (
+          <div
+            key={m.id}
+            className={`flex flex-col gap-3 rounded-xl border-2 p-5 transition-colors ${
+              active ? 'border-brand-navy bg-chip-light' : 'border-line-light bg-card-light'
+            }`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+                    active ? 'bg-brand-navy text-lime-400' : 'bg-chip-light text-brand-navy'
+                  }`}
+                >
+                  <Icon size={22} />
+                </div>
+                <div>
+                  <p className="font-bold">{m.label}</p>
+                  <p className="text-xs text-ink-dim">{count} brinde(s) ativo(s) neste modelo</p>
+                </div>
+              </div>
+              {active ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-lime-400 px-3 py-1 text-xs font-bold text-navy-950">
+                  <CheckCircle2 size={14} /> Ativo no totem
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onActivate(m.id)}
+                  className="rounded-full border border-brand-navy px-4 py-1.5 text-xs font-bold text-brand-navy hover:bg-brand-navy hover:text-white"
+                >
+                  Ativar
+                </button>
+              )}
+            </div>
+            <p className="text-sm text-ink-medium">{m.hint}</p>
+            {m.id === 'choice' && (
+              <label className="flex items-center gap-3 text-sm font-semibold">
+                Mínimo de pares pra escolher
+                <input
+                  type="number"
+                  min={1}
+                  max={12}
+                  value={config.choiceMinPairs ?? 4}
+                  onChange={(e) => onMinPairs(Number(e.target.value))}
+                  className="w-20 rounded-md border border-line-light px-3 py-1.5 text-center"
+                />
+              </label>
+            )}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function PrizesEditor() {
   const [tiers, setTiers] = useState(null)
+  const [config, setConfig] = useState(null)
   const [savedAt, setSavedAt] = useState(null)
+  const [configDirty, setConfigDirty] = useState(false)
+  const [view, setView] = useState(null) // modelo cujos brindes estão sendo editados
 
   useEffect(() => {
     getPrizeTiers().then(setTiers)
+    getGameConfig().then((cfg) => {
+      setConfig(cfg)
+      setView(cfg.prizeMode === 'wheel' ? 'wheel' : 'choice')
+    })
   }, [])
 
-  if (!tiers) return <p>Carregando...</p>
+  if (!tiers || !config) return <p>Carregando...</p>
 
   const updateTier = (id, patch) => {
     setTiers((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)))
+    setSavedAt(null)
+  }
+
+  const updateConfig = (patch) => {
+    setConfig((prev) => ({ ...prev, ...patch }))
+    setConfigDirty(true)
     setSavedAt(null)
   }
 
@@ -130,7 +219,7 @@ export default function PrizesEditor() {
     setTiers((prev) => [
       ...prev,
       {
-        id: `tier-${nextTempId++}`,
+        id: `tier-${Date.now()}-${nextTempId++}`,
         pairs: null,
         label: 'Novo brinde',
         description: '',
@@ -139,6 +228,7 @@ export default function PrizesEditor() {
         enabled: true,
         stockInitial: 0,
         stock: 0,
+        rewardMode: view,
       },
     ])
     setSavedAt(null)
@@ -151,6 +241,10 @@ export default function PrizesEditor() {
 
   const handleSave = async () => {
     await savePrizeTiers(tiers)
+    if (configDirty) {
+      await saveGameConfig(config)
+      setConfigDirty(false)
+    }
     setSavedAt(Date.now())
   }
 
@@ -160,31 +254,27 @@ export default function PrizesEditor() {
     setSavedAt(Date.now())
   }
 
+  const visible = tiers.filter((t) => tierMode(t) === view)
+  const viewMode = PRIZE_MODES.find((m) => m.id === view)
+
   return (
-    <div>
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold">Brindes por acerto ({tiers.length})</h2>
+          <h2 className="text-lg font-bold">Modelo de premiação</h2>
           <p className="text-sm text-ink-dim">
-            "Pares certos" define a faixa. Vários brindes na mesma faixa? O jogo sorteia um
-            (peso pelo estoque). Esgotou a faixa, entrega a de baixo que ainda tenha brinde.
+            Os modelos convivem — escolha qual o totem usa neste evento. Os brindes de cada um ficam guardados.
           </p>
         </div>
         <div className="flex items-center gap-3">
           {savedAt && <span className="text-sm font-semibold text-lime-500">Salvo!</span>}
+          {configDirty && !savedAt && <span className="text-sm font-semibold text-warning">Alterações não salvas</span>}
           <button
             type="button"
             onClick={handleResetStock}
             className="inline-flex items-center gap-1.5 rounded-full border border-line-light bg-card-light px-4 py-2 text-sm font-semibold hover:bg-chip-light"
           >
             <RotateCcw size={15} /> Repor estoque
-          </button>
-          <button
-            type="button"
-            onClick={addTier}
-            className="inline-flex items-center gap-1.5 rounded-full border border-line-light bg-card-light px-4 py-2 text-sm font-semibold hover:bg-chip-light"
-          >
-            <Plus size={16} /> Novo brinde
           </button>
           <button
             type="button"
@@ -196,8 +286,49 @@ export default function PrizesEditor() {
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {tiers.map((tier) => (
+      <PrizeModePicker
+        config={config}
+        tiers={tiers}
+        onActivate={(mode) => {
+          updateConfig({ prizeMode: mode })
+          setView(mode)
+        }}
+        onMinPairs={(n) => updateConfig({ choiceMinPairs: n })}
+      />
+
+      <div>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-3 border-b border-line-light pb-3">
+          <div className="flex items-center gap-2">
+            {PRIZE_MODES.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setView(m.id)}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                  view === m.id ? 'bg-brand-navy text-white' : 'text-ink-medium hover:bg-chip-light'
+                }`}
+              >
+                Brindes · {m.label} ({tiers.filter((t) => tierMode(t) === m.id).length})
+              </button>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={addTier}
+            className="inline-flex items-center gap-1.5 rounded-full border border-line-light bg-card-light px-4 py-2 text-sm font-semibold hover:bg-chip-light"
+          >
+            <Plus size={16} /> Novo brinde ({viewMode?.label})
+          </button>
+        </div>
+        <p className="text-sm text-ink-dim">
+          {view === 'wheel'
+            ? '"Pares certos" define a faixa. Vários brindes na mesma faixa? O jogo sorteia um (peso pelo estoque). Esgotou a faixa, entrega a de baixo que ainda tenha brinde.'
+            : `Quem fechar ${config.choiceMinPairs ?? 4}+ pares escolhe um dos brindes ativos abaixo. Esgotou, a opção some da tela.`}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {visible.map((tier) => (
           <div
             key={tier.id}
             className={`rounded-xl border p-4 ${
@@ -235,19 +366,21 @@ export default function PrizesEditor() {
               <PrizePhotoField tier={tier} onUpdate={updateTier} />
             </div>
 
-            <div className="mb-3 grid grid-cols-3 gap-3">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-ink-medium">Pares certos</label>
-                <input
-                  type="number"
-                  min={1}
-                  max={12}
-                  value={tier.pairs ?? ''}
-                  onChange={(e) => updateTier(tier.id, { pairs: numOrNull(e.target.value) })}
-                  placeholder="—"
-                  className="w-full rounded-md border border-line-light px-3 py-2 text-center"
-                />
-              </div>
+            <div className={`mb-3 grid gap-3 ${tierMode(tier) === 'wheel' ? 'grid-cols-3' : 'grid-cols-2'}`}>
+              {tierMode(tier) === 'wheel' && (
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-ink-medium">Pares certos</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={12}
+                    value={tier.pairs ?? ''}
+                    onChange={(e) => updateTier(tier.id, { pairs: numOrNull(e.target.value) })}
+                    placeholder="—"
+                    className="w-full rounded-md border border-line-light px-3 py-2 text-center"
+                  />
+                </div>
+              )}
               <div>
                 <label className="mb-1 block text-xs font-semibold text-ink-medium">Estoque inicial</label>
                 <input

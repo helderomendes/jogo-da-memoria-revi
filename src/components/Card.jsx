@@ -1,6 +1,6 @@
 import faviconUrl from '../assets/favicon.svg'
 
-export default function Card({ card, index = 0, isFlipped, isMatched, isWrong, onClick, disabled }) {
+export default function Card({ card, index = 0, large = false, isFlipped, isMatched, isWrong, onClick, disabled }) {
   return (
     <button
       type="button"
@@ -49,7 +49,9 @@ export default function Card({ card, index = 0, isFlipped, isMatched, isWrong, o
               />
             ) : (
               <p
-                className={`relative font-sans font-semibold leading-tight text-[clamp(0.7rem,2.4vw,1.15rem)] ${
+                className={`relative font-sans font-semibold leading-tight ${
+                  large ? 'px-[4%] text-[clamp(1rem,1.7vw,2.2rem)]' : 'text-[clamp(0.7rem,2.4vw,1.15rem)]'
+                } ${
                   isMatched ? 'text-lime-200' : 'text-white'
                 }`}
               >

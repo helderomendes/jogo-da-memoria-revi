@@ -16,6 +16,8 @@ import {
   Headphones,
   Pill,
   KeyRound,
+  Beer,
+  HandHeart,
 } from 'lucide-react'
 
 export const PRIZE_ICONS = {
@@ -33,6 +35,8 @@ export const PRIZE_ICONS = {
   headphones: Headphones,
   pill: Pill,
   key: KeyRound,
+  beer: Beer,
+  spa: HandHeart,
 }
 
 export const PRIZE_ICON_OPTIONS = Object.keys(PRIZE_ICONS)

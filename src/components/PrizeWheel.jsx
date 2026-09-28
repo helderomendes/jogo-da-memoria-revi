@@ -40,7 +40,7 @@ export default function PrizeWheel({ pool, target, onDone }) {
   }, [])
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-2xl overflow-hidden py-6">
+    <div ref={containerRef} className="relative w-full max-w-2xl overflow-hidden py-6 lg:max-w-6xl">
       {/* Máscara de esmaecimento nas bordas pra dar sensação de profundidade */}
       <div className="pointer-events-none absolute inset-y-0 left-0 z-20 w-24 bg-gradient-to-r from-navy-900 to-transparent" />
       <div className="pointer-events-none absolute inset-y-0 right-0 z-20 w-24 bg-gradient-to-l from-navy-900 to-transparent" />

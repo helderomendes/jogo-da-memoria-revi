@@ -5,7 +5,7 @@
 import { supabase } from './supabaseClient'
 import { readJSON, writeJSON } from './storage'
 import { DEFAULT_CARDS } from '../data/cards'
-import { DEFAULT_PRIZE_TIERS } from '../data/prizes'
+import { DEFAULT_PRIZE_TIERS, tierMode } from '../data/prizes'
 import { DEFAULT_GAME_CONFIG } from '../data/config'
 import { DEFAULT_PRIZE_ICON } from '../data/prizeIcons'
 import { determinePrize } from './gameEngine'
@@ -149,12 +149,24 @@ export function leadKey(log) {
 }
 
 export function normalizeTags(tags) {
+  const seen = new Set()
   const list = (Array.isArray(tags) ? tags : String(tags ?? '').split(','))
     .map((t) => t.trim())
     .filter(Boolean)
     .filter((t) => t.toLowerCase() !== SOURCE_TAG)
+    .filter((t) => (seen.has(t.toLowerCase()) ? false : seen.add(t.toLowerCase())))
   list.push(SOURCE_TAG)
   return list
+}
+
+// Slug de tag a partir de um nome livre ("D2C Summit" -> "d2c-summit").
+export function slugifyTag(raw) {
+  return String(raw ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
 }
 
 // --- Mapeamentos linha do banco (snake_case) <-> objeto do app (camelCase) ---
@@ -178,6 +190,25 @@ function rowToTier(row) {
     enabled: row.enabled !== false,
     stockInitial: row.stock_initial ?? null,
     stock: row.stock ?? null,
+    rewardMode: row.reward_mode === 'choice' ? 'choice' : 'wheel',
+  }
+}
+
+// Linha do banco a partir do tier do app (save/reset de estoque).
+function tierToRow(t, i, { resetStock = false } = {}) {
+  return {
+    id: t.id,
+    pairs: t.pairs ?? null,
+    label: t.label ?? '',
+    description: t.description ?? '',
+    icon: t.icon ?? DEFAULT_PRIZE_ICON,
+    image: t.image ?? null,
+    enabled: t.enabled !== false,
+    stock_initial: t.stockInitial ?? null,
+    stock: resetStock ? (t.stockInitial ?? null) : (t.stock ?? null),
+    reward_mode: tierMode(t),
+    sort_order: i,
+    updated_at: new Date().toISOString(),
   }
 }
 
@@ -246,7 +277,14 @@ export async function uploadPrizeImage(file) {
 async function fetchPrizeTiersRemote() {
   const { data, error } = await supabase.from('prize_tiers').select('*').order('sort_order')
   if (error) throw error
-  return (data ?? []).map(rowToTier)
+  const rows = data ?? []
+  const tiers = rows.map(rowToTier)
+  // Banco ainda sem a migration 0010 (sem coluna reward_mode): usa os brindes
+  // à escolha padrão (estoque ilimitado) pra o modelo 'choice' já funcionar.
+  if (rows.length && !('reward_mode' in rows[0])) {
+    return [...tiers, ...DEFAULT_PRIZE_TIERS.filter((t) => tierMode(t) === 'choice')]
+  }
+  return tiers
 }
 
 export async function getPrizeTiers() {
@@ -254,19 +292,7 @@ export async function getPrizeTiers() {
 }
 
 export async function savePrizeTiers(tiers) {
-  const rows = tiers.map((t, i) => ({
-    id: t.id,
-    pairs: t.pairs ?? null,
-    label: t.label ?? '',
-    description: t.description ?? '',
-    icon: t.icon ?? DEFAULT_PRIZE_ICON,
-    image: t.image ?? null,
-    enabled: t.enabled !== false,
-    stock_initial: t.stockInitial ?? null,
-    stock: t.stock ?? null,
-    sort_order: i,
-    updated_at: new Date().toISOString(),
-  }))
+  const rows = tiers.map((t, i) => tierToRow(t, i))
   const { data: existing } = await supabase.from('prize_tiers').select('id')
   const keep = new Set(rows.map((r) => r.id))
   const toDelete = (existing ?? []).filter((r) => !keep.has(r.id)).map((r) => r.id)
@@ -301,7 +327,8 @@ export async function awardPrize(correctPairs) {
 // estoque do servidor (determinePrize) e registra a baixa na fila de sync.
 function awardPrizeOffline(correctPairs) {
   const tiers = getCache(CACHE_KEYS.tiers) ?? DEFAULT_PRIZE_TIERS
-  const chosen = determinePrize(correctPairs, tiers)
+  // Só brindes do modelo roleta entram no sorteio por faixa.
+  const chosen = determinePrize(correctPairs, tiers.filter((t) => tierMode(t) === 'wheel'))
   if (!chosen) return null
 
   const updated = tiers.map((t) =>
@@ -310,6 +337,28 @@ function awardPrizeOffline(correctPairs) {
   setCache(CACHE_KEYS.tiers, updated)
   enqueue(QUEUE_KEYS.awards, { tierId: chosen.id, at: new Date().toISOString() })
   return chosen
+}
+
+// Modelo ESCOLHA: o jogador escolheu `tier`. Dá baixa de 1 no estoque (se não
+// for ilimitado) — online direto no banco; offline no cache local + fila de
+// sync (a mesma fila das baixas da roleta). Retorna o tier com o estoque novo.
+export async function claimChoicePrize(tier) {
+  if (!tier) return null
+  const hasStock = typeof tier.stock === 'number'
+  const next = hasStock ? { ...tier, stock: Math.max(0, tier.stock - 1) } : tier
+  if (!hasStock) return next
+
+  if (isOnline()) {
+    const { error } = await supabase.rpc('decrement_prize_stock', { p_id: tier.id, p_qty: 1 })
+    if (!error) {
+      syncTierStockCache(next)
+      return next
+    }
+    console.warn('[claimChoicePrize] falhou online, enfileirando baixa:', error.message)
+  }
+  syncTierStockCache(next)
+  enqueue(QUEUE_KEYS.awards, { tierId: tier.id, at: new Date().toISOString() })
+  return next
 }
 
 // Reflete no cache local a baixa que o servidor acabou de fazer (premiação online).
@@ -325,19 +374,7 @@ function syncTierStockCache(tier) {
 // Restaura o estoque atual de cada tier ao valor inicial cadastrado (uso admin).
 export async function resetPrizeStock() {
   const tiers = await getPrizeTiers()
-  const rows = tiers.map((t, i) => ({
-    id: t.id,
-    pairs: t.pairs ?? null,
-    label: t.label ?? '',
-    description: t.description ?? '',
-    icon: t.icon ?? DEFAULT_PRIZE_ICON,
-    image: t.image ?? null,
-    enabled: t.enabled !== false,
-    stock_initial: t.stockInitial ?? null,
-    stock: t.stockInitial ?? null,
-    sort_order: i,
-    updated_at: new Date().toISOString(),
-  }))
+  const rows = tiers.map((t, i) => tierToRow(t, i, { resetStock: true }))
   const { error } = await supabase.from('prize_tiers').upsert(rows)
   if (error) throw error
   const mapped = rows.map(rowToTier)

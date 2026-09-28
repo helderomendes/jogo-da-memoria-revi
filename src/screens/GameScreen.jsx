@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Grid3x3, Target, Timer } from 'lucide-react'
 import { useKiosk } from '../context/KioskContext'
 import { buildBoard, generatePickupCode } from '../utils/gameEngine'
-import { getGameConfig, appendGameLog, awardPrize } from '../utils/dataStore'
+import { getGameConfig, appendGameLog, awardPrize, getPrizeTiers } from '../utils/dataStore'
+import { availableChoicePrizes } from '../utils/prizeModes'
 import Board from '../components/Board'
 import Logo from '../components/Logo'
 import BackgroundGlow from '../components/BackgroundGlow'
@@ -12,7 +13,7 @@ const COMPARE_DELAY_MS = 700
 const STEP_DELAY_MS = 700
 
 export default function GameScreen() {
-  const { session, finishGame } = useKiosk()
+  const { session, finishGame, isLandscape } = useKiosk()
   const [config, setConfig] = useState(null)
 
   const [board, setBoard] = useState([])
@@ -106,6 +107,42 @@ export default function GameScreen() {
     if (gameOverRef.current) return
     gameOverRef.current = true
 
+    const baseLog = {
+      name: session.name,
+      phone: session.phone || null,
+      company: session.company || null,
+      timestamp: new Date().toISOString(),
+      pairsSorteados: session.pairs.map((p) => p.id),
+      chancesUsadas: config.totalChances,
+      paresCertos: correctPairs,
+      // Tag do evento (ex.: d2c-summit) — identifica a origem do lead no CRM.
+      tags: config.eventTag ? [config.eventTag] : [],
+    }
+
+    if (config.prizeMode === 'choice') {
+      // Modelo ESCOLHA: atingiu o mínimo e há opção com estoque → o jogador
+      // escolhe na tela de prêmio; a partida é gravada depois da escolha.
+      const qualifies = correctPairs >= (config.choiceMinPairs ?? 4)
+      const options = qualifies ? availableChoicePrizes(await getPrizeTiers()) : []
+      const isWin = options.length > 0
+      const log = {
+        ...baseLog,
+        premioGanho: isWin ? 'A escolher' : qualifies ? 'Sem estoque' : `Nenhum (${correctPairs} pares)`,
+        codigoRetirada: null,
+      }
+      if (!isWin) await appendGameLog(log)
+      finishGame({
+        correctPairs,
+        totalPairs,
+        isWin,
+        prizeMode: 'choice',
+        prizeTier: null,
+        pickupCode: null,
+        pendingLog: isWin ? log : null,
+      })
+      return
+    }
+
     const madePairs = correctPairs > 0
     // awardPrize escolhe a faixa e dá baixa no estoque atomicamente no banco.
     const tier = madePairs ? await awardPrize(correctPairs) : null
@@ -115,13 +152,7 @@ export default function GameScreen() {
     const pickupCode = isWin ? generatePickupCode() : null
 
     await appendGameLog({
-      name: session.name,
-      phone: session.phone || null,
-      company: session.company || null,
-      timestamp: new Date().toISOString(),
-      pairsSorteados: session.pairs.map((p) => p.id),
-      chancesUsadas: config.totalChances,
-      paresCertos: correctPairs,
+      ...baseLog,
       premioGanho: tier?.label ?? (madePairs ? 'Sem estoque' : 'Nenhum (0 pares)'),
       codigoRetirada: pickupCode,
     })
@@ -130,6 +161,7 @@ export default function GameScreen() {
       correctPairs,
       totalPairs,
       isWin,
+      prizeMode: 'wheel',
       prizeTier: tier,
       pickupCode,
     })
@@ -178,12 +210,52 @@ export default function GameScreen() {
     return (
       <div className="relative flex h-full w-full flex-col items-center justify-center gap-10 overflow-hidden bg-revi-gradient text-white">
         <BackgroundGlow />
-        <Logo className="h-10 absolute top-10" />
+        <Logo className={isLandscape ? 'absolute left-[2.5vw] top-[4vh] h-[clamp(2rem,3.2vw,3.2rem)]' : 'h-10 absolute top-10'} />
         <div
           key={readyIndex}
-          className="animate-[pop_0.4s_ease-out_backwards] text-8xl sm:text-9xl font-extrabold tracking-tight text-lime-400"
+          className="animate-[pop_0.4s_ease-out_backwards] text-8xl sm:text-9xl lg:text-[12rem] font-extrabold tracking-tight text-lime-400"
         >
           {readySteps[readyIndex]}
+        </div>
+      </div>
+    )
+  }
+
+  const flippedForBoard = phase === 'memorize' ? board.map((c) => c.uid) : flippedUids
+
+  if (isLandscape) {
+    // Horizontal (TV): placar numa coluna à esquerda, tabuleiro com cartas
+    // "deitadas" ocupando o resto da tela.
+    return (
+      <div className="flex h-full w-full items-stretch gap-[2vw] bg-revi-gradient px-[2.5vw] py-[3vh] text-white">
+        <aside className="flex w-[clamp(220px,18vw,340px)] shrink-0 flex-col justify-between py-[1vh]">
+          <Logo className="h-[clamp(2rem,3.2vw,3.2rem)] self-start" />
+          <div className="flex flex-col gap-[1.4vh]">
+            <HudStat label="Chances" value={`${chancesLeft}/${config.totalChances}`} tone="sky" />
+            <HudStat
+              label="Tempo"
+              value={phase === 'memorize' ? `${config.guessSeconds}s` : `${guessCountdown}s`}
+              tone="sky"
+            />
+            <HudStat label="Pares" value={`${matchedPairIds.length}/${totalPairs}`} tone="lime" />
+          </div>
+          <div className="min-h-[3.5em] text-[clamp(1.4rem,2.2vw,2.4rem)] font-extrabold leading-tight text-lime-400">
+            {phase === 'memorize' ? `Memorize! ${memorizeCountdown}s` : ''}
+          </div>
+        </aside>
+
+        <div className="min-h-0 min-w-0 flex-1">
+          <Board
+            cards={board}
+            cols={config.boardCols}
+            rows={config.boardRows}
+            orientation="landscape"
+            flippedUids={flippedForBoard}
+            matchedPairIds={matchedPairIds}
+            wrongUids={wrongFlash}
+            disabled={phase !== 'playing'}
+            onCardClick={handleCardClick}
+          />
         </div>
       </div>
     )
@@ -212,13 +284,31 @@ export default function GameScreen() {
           cards={board}
           cols={config.boardCols}
           rows={config.boardRows}
-          flippedUids={phase === 'memorize' ? board.map((c) => c.uid) : flippedUids}
+          flippedUids={flippedForBoard}
           matchedPairIds={matchedPairIds}
           wrongUids={wrongFlash}
           disabled={phase !== 'playing'}
           onCardClick={handleCardClick}
         />
       </div>
+    </div>
+  )
+}
+
+// Placar grande da coluna lateral (layout horizontal) — legível à distância.
+function HudStat({ label, value, tone }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/6 px-[1.2vw] py-[1.4vh]">
+      <p className="text-[clamp(0.8rem,1vw,1.1rem)] font-semibold uppercase tracking-[0.18em] text-ink-300">
+        {label}
+      </p>
+      <p
+        className={`text-[clamp(2rem,3.6vw,4rem)] font-extrabold leading-none tracking-tight ${
+          tone === 'lime' ? 'text-lime-400' : 'text-sky-400'
+        }`}
+      >
+        {value}
+      </p>
     </div>
   )
 }
