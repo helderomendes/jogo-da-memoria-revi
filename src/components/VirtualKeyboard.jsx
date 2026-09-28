@@ -6,6 +6,9 @@ const ROWS = [
 
 const SYMBOLS_ROW = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.', '-', '/']
 
+// Atalhos de domínio no teclado de site: um toque em vez de 4/3 teclas.
+const DOMAIN_KEYS = ['.com', '.br']
+
 // `large`: teclas maiores pro layout horizontal (TV), ocupando a coluna toda.
 export default function VirtualKeyboard({ value, onChange, maxLength = 40, withSymbols = false, large = false }) {
   const keyH = large ? 'h-[clamp(3.5rem,7.5vh,6rem)] text-[clamp(1.2rem,1.6vw,2rem)]' : 'h-14 text-xl'
@@ -13,7 +16,7 @@ export default function VirtualKeyboard({ value, onChange, maxLength = 40, withS
   const maxKey = large ? 'max-w-none' : 'max-w-16'
   const maxSym = large ? 'max-w-none' : 'max-w-12'
   const pressKey = (key) => {
-    if (value.length >= maxLength) return
+    if (value.length + key.length > maxLength) return
     onChange(value + key)
   }
 
@@ -54,6 +57,17 @@ export default function VirtualKeyboard({ value, onChange, maxLength = 40, withS
         </div>
       ))}
       <div className="flex justify-center gap-1.5">
+        {withSymbols &&
+          DOMAIN_KEYS.map((key) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => pressKey(key)}
+              className={`flex-[1.2] ${symH} rounded-md border border-sky-500/40 bg-sky-500/15 font-semibold text-sky-300 transition-colors active:bg-lime-400 active:text-navy-950`}
+            >
+              {key}
+            </button>
+          ))}
         <button
           type="button"
           onClick={space}
